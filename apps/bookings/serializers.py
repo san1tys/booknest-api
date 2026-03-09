@@ -47,3 +47,12 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             status = BookingStatus.PENDING
         )
         return booking
+    
+class BookingListSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    room_title = serializers.CharField(source="room.title", read_only=True)
+    hotel_name = serializers.CharField(source="room.hotel.name", read_only=True)
+    
+    class Meta:
+        model = Booking
+        fields = ("id", "user_email", "room", "room_title", "hotel_name", "check_in", "check_out", "status", "total_price", "created_at")
