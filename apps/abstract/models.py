@@ -46,3 +46,8 @@ class AbstractSoftDeleteModel(Model):
         """Restore the soft-deleted object by clearing deleted_at."""
         self.deleted_at = None
         self.save()
+
+    class Meta:
+        """Meta class for AbstractSoftDeleteModel."""
+
+        abstract = True
