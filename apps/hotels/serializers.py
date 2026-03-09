@@ -40,3 +40,14 @@ class HotelDetailSerializer(serializers.ModelSerializer):
         model = Hotel
         fields = ["id", "name", "description", "address", "city", "created_at", "owner"]
 
+# class HotelDeleteSerializer(serializers.ModelSerializer):
+#     """Serializer for deleting Hotel instances, including only the id field."""
+
+#     class Meta:
+#         """Meta class for HotelDeleteSerializer."""
+#         model = Hotel
+#         fields = ["id"]
+
+#     def delete(self, instance: Hotel) -> None:
+#         """Delete the specified Hotel instance."""
+#         instance.delete()
