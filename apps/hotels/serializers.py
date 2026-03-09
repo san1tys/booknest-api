@@ -1,9 +1,6 @@
 from typing import Any
-
 from rest_framework import serializers
-
-from apps.hotels.models import Hotel
-from apps.users.models import User
+from apps.hotels.models import Hotel, Room
 from apps.users.serializers import UserSerializer
 
 class HotelSerializer(serializers.ModelSerializer):
@@ -51,3 +48,37 @@ class HotelDetailSerializer(serializers.ModelSerializer):
 #     def delete(self, instance: Hotel) -> None:
 #         """Delete the specified Hotel instance."""
 #         instance.delete()
+
+
+
+
+class RoomCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = ("id", "hotel", "title", "price_per_night", "capacity", "quantity")
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        price = attrs.get("price_per_night")
+        capacity = attrs.get("capacity")
+        quantity = attrs.get("quantity")
+        if price is not None and price <= 0:
+            raise serializers.ValidationError({"price_per_night": "Must be positive."})
+        if capacity is not None and capacity <= 0:
+            raise serializers.ValidationError({"capacity": "Must be > 0."})
+        if quantity is not None and quantity <= 0:
+            raise serializers.ValidationError({"quantity": "Must be > 0."})
+        return attrs
+
+class RoomDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = (
+            "id",
+            "hotel",
+            "title",
+            "price_per_night",
+            "capacity",
+            "quantity",
+            "created_at",
+        )
+        read_only_fields = ("id", "created_at")
