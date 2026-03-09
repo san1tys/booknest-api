@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from apps.users.models import User
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration, including email, password, first name, and last name."""
