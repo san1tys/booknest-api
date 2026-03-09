@@ -9,26 +9,26 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
-    HTTP_205_RESET_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
-    HTTP_405_METHOD_NOT_ALLOWED,
     HTTP_404_NOT_FOUND,
+    HTTP_405_METHOD_NOT_ALLOWED,
 )
-
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from drf_spectacular.utils import extend_schema
 
+from apps.hotels.models import Hotel, Room
 from apps.hotels.serializers import (
-    HotelCreateUpdateSerializer, 
-    HotelDetailSerializer
+    HotelCreateUpdateSerializer,
+    HotelDetailSerializer,
+    RoomCreateUpdateSerializer,
+    RoomDetailSerializer,
 )
-from apps.users.models import User
-from apps.hotels.models import Hotel
-
-from apps.abstract.serializers import ErrorDetailSerializer, MessageSerializer, ValidationErrorSerializer
+from apps.abstract.serializers import (
+    ErrorDetailSerializer,
+    MessageSerializer,
+    ValidationErrorSerializer,
+)
 
 class HotelViewSet(ViewSet):
     """ViewSet for managing hotels."""
@@ -85,7 +85,7 @@ class HotelViewSet(ViewSet):
             HTTP_200_OK: HotelDetailSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
-            HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+            HTTP_403_FORBIDDEN:ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
         },
@@ -249,3 +249,221 @@ class HotelViewSet(ViewSet):
 
         hotel.delete()
         return DRFResponse({"detail": "Hotel deleted successfully."}, status=HTTP_204_NO_CONTENT)
+    
+
+
+
+
+
+
+class RoomViewSet(ViewSet):
+    """ViewSet for managing rooms."""
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=RoomCreateUpdateSerializer,
+        responses={
+            HTTP_201_CREATED: RoomDetailSerializer,
+            HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
+            HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+        },
+        description="Create a new room (only hotel owner). Requires auth.",
+        summary="Create Room",
+        examples=[
+            {
+                "hotel": 1,
+                "title": "Deluxe Room",
+                "price_per_night": "120.00",
+                "capacity": 2,
+                "quantity": 3,
+            }
+        ],
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="create",
+        url_name="create",
+        permission_classes=[IsAuthenticated],
+    )
+    def create_room(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
+        serializer = RoomCreateUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+        hotel = serializer.validated_data["hotel"]
+        if not hotel.owner_id or hotel.owner_id != request.user.id:
+            return DRFResponse(
+                {"detail": "Only the hotel owner can create rooms."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        room = serializer.save()
+        return DRFResponse(RoomDetailSerializer(room).data, status=HTTP_201_CREATED)
+
+    @extend_schema(
+        request=RoomCreateUpdateSerializer,
+        responses={
+            HTTP_200_OK: RoomDetailSerializer,
+            HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
+            HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+            HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+        },
+        description="Update a room (only hotel owner). Requires auth.",
+        summary="Update Room",
+    )
+    @action(
+        detail=True,
+        methods=["put"],
+        url_path="update",
+        url_name="update",
+        permission_classes=[IsAuthenticated],
+    )
+    def update_room(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
+        try:
+            room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
+        except Room.DoesNotExist:
+            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+
+        if room.hotel.owner_id != request.user.id:
+            return DRFResponse(
+                {"detail": "You do not have permission to edit this room."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        serializer = RoomCreateUpdateSerializer(room, data=request.data)
+        if serializer.is_valid():
+            updated = serializer.save()
+            return DRFResponse(RoomDetailSerializer(updated).data, status=HTTP_200_OK)
+        return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        responses={
+            HTTP_200_OK: RoomDetailSerializer,
+            HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+        },
+        description="Retrieve details of a specific room.",
+        summary="Get Room Details",
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="details",
+        url_name="details",
+        permission_classes=[AllowAny],
+    )
+    def room_details(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
+        try:
+            room = Room.objects.select_related("hotel").get(pk=pk)
+        except Room.DoesNotExist:
+            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+        return DRFResponse(RoomDetailSerializer(room).data, status=HTTP_200_OK)
+
+    @extend_schema(
+        responses={HTTP_200_OK: RoomDetailSerializer(many=True)},
+        description=(
+            "List rooms. Query params: hotel, min_price, max_price, "
+            "capacity_gte, search, ordering."
+        ),
+        summary="List Rooms",
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="list",
+        url_name="list",
+        permission_classes=[AllowAny],
+    )
+    def list_rooms(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
+        qs = Room.objects.select_related("hotel", "hotel__owner").all()
+
+        hotel = request.query_params.get("hotel")
+        min_price = request.query_params.get("min_price")
+        max_price = request.query_params.get("max_price")
+        capacity_gte = request.query_params.get("capacity_gte")
+        search = request.query_params.get("search")
+        ordering = request.query_params.get("ordering")
+
+        if hotel:
+            qs = qs.filter(hotel_id=hotel)
+        if min_price:
+            qs = qs.filter(price_per_night__gte=min_price)
+        if max_price:
+            qs = qs.filter(price_per_night__lte=max_price)
+        if capacity_gte:
+            qs = qs.filter(capacity__gte=capacity_gte)
+        if search:
+            qs = qs.filter(title__icontains=search)
+
+        allowed_ordering = {
+            "price_per_night",
+            "-price_per_night",
+            "capacity",
+            "-capacity",
+            "created_at",
+            "-created_at",
+        }
+        if ordering in allowed_ordering:
+            qs = qs.order_by(ordering)
+
+        data = RoomDetailSerializer(qs, many=True).data
+        return DRFResponse(data, status=HTTP_200_OK)
+
+    @extend_schema(
+        responses={
+            HTTP_204_NO_CONTENT: MessageSerializer,
+            HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+            HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+        },
+        description="Delete a room (only hotel owner). Requires auth.",
+        summary="Delete Room",
+    )
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path="delete",
+        url_name="delete",
+        permission_classes=[IsAuthenticated],
+    )
+    def delete_room(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
+        try:
+            room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
+        except Room.DoesNotExist:
+            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+
+        if room.hotel.owner_id != request.user.id:
+            return DRFResponse(
+                {"detail": "You do not have permission to delete this room."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        room.delete()
+        return DRFResponse({"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT)

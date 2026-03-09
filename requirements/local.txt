@@ -1,1 +1,3 @@
 -r prod.txt
+
+python-decouple==3.8
