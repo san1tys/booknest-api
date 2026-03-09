@@ -11,17 +11,16 @@ from rest_framework.status import (
     HTTP_205_RESET_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
-    HTTP_405_METHOD_NOT_ALLOWED
+    HTTP_405_METHOD_NOT_ALLOWED,
+    HTTP_404_NOT_FOUND,
 )
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema
 
-from apps.users.models import CustomUser, User
+from apps.users.models import User
 from apps.users.serializers import (
-    LogoutRequestSerializer,
-    UserListResponseSerializer,
     UserLoginSerializer,
     UserLoginSuccessSerializer,
     UserRegisterSerializer,
@@ -115,6 +114,7 @@ class UserViewSet(ViewSet):
         responses={
             HTTP_200_OK: UserLoginSuccessSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
         },
     )
@@ -137,11 +137,19 @@ class UserViewSet(ViewSet):
                 DRFResponse:
                     A response containing the user details and tokens or validation errors.
             """
+
             if request.user.is_authenticated:
                 return DRFResponse({"detail": "You are already authenticated."}, status=HTTP_405_METHOD_NOT_ALLOWED )
+            
             serializer = UserLoginSerializer(data=request.data)
             if serializer.is_valid():
-                user: User = serializer.validated_data["user"]
+                user: User = User.objects.filter(email=serializer.validated_data["email"]).first()
+
+                if user is None or not user.check_password(serializer.validated_data["password"]):
+                    return DRFResponse({"detail": "Invalid email or password."}, status=HTTP_401_UNAUTHORIZED)
+                if not user.is_active:
+                    return DRFResponse({"detail": "User account is disabled."}, status=HTTP_401_UNAUTHORIZED)
+                
                 refresh: RefreshToken = RefreshToken.for_user(user)
                 response_data = {
                     "email": user.email,
@@ -149,5 +157,6 @@ class UserViewSet(ViewSet):
                     "refresh": str(refresh),
                 }
                 serializer = UserLoginSuccessSerializer(data=response_data)
-                return DRFResponse(serializer.data, status=HTTP_200_OK)
+                if serializer.is_valid():
+                    return DRFResponse(serializer.data, status=HTTP_200_OK)
             return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
