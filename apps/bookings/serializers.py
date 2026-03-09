@@ -56,3 +56,19 @@ class BookingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ("id", "user_email", "room", "room_title", "hotel_name", "check_in", "check_out", "status", "total_price", "created_at")
+        
+class AvailabilityQuerySerializer(serializers.Serializer):
+    room = serializers.IntegerField()
+    check_in = serializers.DateField()
+    check_out = serializers.DateField()
+    
+    def validate(self, attrs: dict) -> dict:
+        if attrs["check_out"] <= attrs["check_in"]:
+            raise serializers.ValidationError({"check_out": "Check-out date must be after check-in date."})
+        return attrs
+    
+class AvailabilityResponseSerializer(serializers.Serializer):
+    room = serializers.IntegerField()
+    check_in = serializers.DateField()
+    check_out = serializers.DateField()
+    available = serializers.BooleanField()
