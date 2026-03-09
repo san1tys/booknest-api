@@ -1,0 +1,49 @@
+from django.db.models import Q
+from rest_framework import serializers
+
+from apps.bookings.models import Booking, BookingStatus
+
+class BookingCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ("id", "room", "check_in", "check_out", "status", "total_price")
+        read_only_fields = ("id","status", "total_price")
+        
+    def validate(self, attrs: dict) -> dict:
+        room = attrs["room"]
+        check_in = attrs["check_in"]
+        check_out = attrs["check_out"]
+        
+        if check_out <= check_in:
+            raise serializers.ValidationError({"check_out": "Check-out date must be after check-in date."})
+        
+        overlapping_bookings = Booking.objects.filter(
+            room=room,
+            status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED],
+        ).filter(
+            Q(check_in__lt=check_out) & Q(check_out__gt=check_in)
+        )
+        
+        if overlapping_bookings.exists():
+            raise serializers.ValidationError({"non_field_errors": "The selected room is not available for the chosen dates."})
+        
+        return attrs
+    
+    def create(self, validated_data: dict) -> Booking:
+        request = self.context["request"]
+        room = validated_data["room"]
+        check_in = validated_data["check_in"]
+        check_out = validated_data["check_out"]
+        
+        nights = (check_out - check_in).days
+        total_price = room.price_per_night * nights
+        
+        booking = Booking.objects.create(
+            user=request.user,
+            room=room,
+            check_in=check_in,
+            check_out=check_out,
+            total_price=total_price,
+            status = BookingStatus.PENDING
+        )
+        return booking
