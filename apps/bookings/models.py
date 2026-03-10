@@ -9,7 +9,7 @@ class BookingStatus(models.TextChoices):
     CANCELLED = "cancelled", "Cancelled"
 
 class Booking(AbstractBaseModel):
-    STATUS_MAX_LENTH = 20
+    STATUS_MAX_LENGTH = 20
     
     user = models.ForeignKey(
         "users.User",
