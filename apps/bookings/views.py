@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, status
 from django.db.models import Q, QuerySet
 from rest_framework.views import APIView
@@ -9,14 +8,13 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from apps.bookings.models import Booking
 from apps.bookings.serializers import *
 
-class BookingCreateView(generics.CreateAPIView):
-    queryset = Booking.objects.all()
-    serializer_class = BookingCreateSerializer
-    permission_classes = (IsAuthenticated)
+class BookingListCreateView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
     
-class BookingListView(generics.ListAPIView):
-    serializer_class = BookingListSerializer
-    permission_classes = (IsAuthenticated)
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return BookingCreateSerializer
+        return BookingListSerializer
     
     def get_queryset(self) -> QuerySet[Booking]:
         user = self.request.user
@@ -30,8 +28,8 @@ class BookingListView(generics.ListAPIView):
         
         if user.hotels.exists():
             return queryset.filter(room__hotel__owner=user)
-        return queryset.filter(user=user)   
-    
+        return queryset.filter(user=user)
+
 class AvailabilityView(APIView):
     permission_classes = (IsAuthenticated,)
     
@@ -103,6 +101,9 @@ class BookingCancelView(APIView):
         
         if not (is_booking_owner or is_hotel_owner):
             return Response({"detail": "You do not have permission to cancel this booking."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if booking.status == BookingStatus.CANCELLED:
+            return Response({"detail": "Booking is already cancelled."}, status=status.HTTP_400_BAD_REQUEST)
         
         booking.status = BookingStatus.CANCELLED
         booking.save()
