@@ -34,7 +34,7 @@ class Booking(AbstractBaseModel):
         help_text="The date when the booking ends."
     )
     status = models.CharField(
-        max_length=STATUS_MAX_LENTH,
+        max_length=STATUS_MAX_LENGTH,
         choices=BookingStatus.choices,
         default=BookingStatus.PENDING,
         verbose_name="Booking Status",
