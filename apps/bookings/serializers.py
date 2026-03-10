@@ -72,3 +72,9 @@ class AvailabilityResponseSerializer(serializers.Serializer):
     check_in = serializers.DateField()
     check_out = serializers.DateField()
     available = serializers.BooleanField()
+    
+class BookingCancelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ("id", "status", "check_in", "check_out", "total_price")
+        read_only_fields = fields
