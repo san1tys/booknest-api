@@ -21,8 +21,24 @@ from apps.bookings.models import Booking, BookingStatus
 from apps.bookings.serializers import *
 
 class BookingViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
+    """ViewSet for managing bookings"""
     
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookingListSerializer
+    queryset = Booking.objects.all()
+    
+    def get_serializer_class(self):
+        """Return serializer class based on current action"""
+        if self.action == "create_booking":
+            return BookingCreateSerializer
+        if self.action == "list_bookings":
+            return BookingListSerializer
+        if self.action == "check_availability":
+            return AvailabilityResponseSerializer
+        if self.action == "cancel_booking":
+            return BookingCancelSerializer
+        return self.serializer_class
+
     @extend_schema(
         request=BookingCreateSerializer,
         responses={
@@ -195,6 +211,15 @@ class BookingViewSet(ViewSet):
         return DRFResponse(response_serializer.data, status=HTTP_200_OK)
     
     @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="pk",
+                type=int,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="ID of the booking to cancel"
+            )
+        ],
         responses={
             HTTP_200_OK: BookingCancelSerializer,
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
@@ -213,7 +238,7 @@ class BookingViewSet(ViewSet):
     def cancel_booking(
         self,
         request: DRFRequest,
-        pk: int,
+        pk: int = None,
         *args: tuple[Any, ...],
         **kwargs: dict[str, Any],
     ) -> DRFResponse:
