@@ -1,24 +1,24 @@
 from typing import Any
 
-from rest_framework.viewsets import ViewSet
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
-    HTTP_205_RESET_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_405_METHOD_NOT_ALLOWED,
-    HTTP_404_NOT_FOUND,
 )
-
+from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from drf_spectacular.utils import extend_schema
-
+from apps.abstract.serializers import (
+    ErrorDetailSerializer,
+    ValidationErrorSerializer,
+)
 from apps.users.models import User
 from apps.users.serializers import (
     UserLoginSerializer,
@@ -26,7 +26,6 @@ from apps.users.serializers import (
     UserRegisterSerializer,
     UserSerializer,
 )
-from apps.abstract.serializers import ErrorDetailSerializer, MessageSerializer, ValidationErrorSerializer
 
 
 class UserViewSet(ViewSet):
@@ -48,7 +47,9 @@ class UserViewSet(ViewSet):
         url_name="me",
         url_path="me",
     )
-    def me(self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def me(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
         """
         Handle GET request for user details.
 
@@ -58,12 +59,15 @@ class UserViewSet(ViewSet):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            DRFResponse: 
+            DRFResponse:
                 A response containing the user details or an error message.
         """
-        if not request.user.is_authenticated:
-            return DRFResponse({"detail": "Authentication credentials were not provided."}, status=HTTP_401_UNAUTHORIZED)
-        user = request.user 
+        # if not request.user.is_authenticated:
+        #     return DRFResponse(
+        #         {"detail": "Authentication credentials were not provided."},
+        #         status=HTTP_401_UNAUTHORIZED,
+        #     )
+        user = request.user
         serializer = UserSerializer(user)
         return DRFResponse(serializer.data, status=HTTP_200_OK)
 
@@ -85,7 +89,9 @@ class UserViewSet(ViewSet):
         url_name="register",
         url_path="register",
     )
-    def register(self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def register(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
         """
         Handle POST request for user registration.
 
@@ -94,18 +100,21 @@ class UserViewSet(ViewSet):
             *args: Additional positional arguments.
             **kwargs: Additional keyword arguments.
         Returns:
-            DRFResponse: 
+            DRFResponse:
                 A response containing the newly created user details or validation errors.
         """
         if request.user.is_authenticated:
-            return DRFResponse({"detail": "You are already authenticated."}, status=HTTP_401_UNAUTHORIZED)
+            return DRFResponse(
+                {"detail": "You are already authenticated."},
+                status=HTTP_401_UNAUTHORIZED,
+            )
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             response_serializer = UserSerializer(user)
             return DRFResponse(response_serializer.data, status=HTTP_201_CREATED)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
-    
+
     # Login user
     @extend_schema(
         summary="Login user",
@@ -125,38 +134,53 @@ class UserViewSet(ViewSet):
         url_name="login",
         url_path="login",
     )
-    def login(self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
-            """
-            Handle POST request for user login.
-    
-            Args:
-                request (DRFRequest): The incoming request object containing user login data.
-                *args: Additional positional arguments.
-                **kwargs: Additional keyword arguments.
-            Returns:
-                DRFResponse:
-                    A response containing the user details and tokens or validation errors.
-            """
+    def login(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
+        """
+        Handle POST request for user login.
 
-            if request.user.is_authenticated:
-                return DRFResponse({"detail": "You are already authenticated."}, status=HTTP_405_METHOD_NOT_ALLOWED )
-            
-            serializer = UserLoginSerializer(data=request.data)
+        Args:
+            request (DRFRequest): The incoming request object containing user login data.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+        Returns:
+            DRFResponse:
+                A response containing the user details and tokens or validation errors.
+        """
+
+        if request.user.is_authenticated:
+            return DRFResponse(
+                {"detail": "You are already authenticated."},
+                status=HTTP_405_METHOD_NOT_ALLOWED,
+            )
+
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user: User = User.objects.filter(
+                email=serializer.validated_data["email"]
+            ).first()
+
+            if user is None or not user.check_password(
+                serializer.validated_data["password"]
+            ):
+                return DRFResponse(
+                    {"detail": "Invalid email or password."},
+                    status=HTTP_401_UNAUTHORIZED,
+                )
+            if not user.is_active:
+                return DRFResponse(
+                    {"detail": "User account is disabled."},
+                    status=HTTP_401_UNAUTHORIZED,
+                )
+
+            refresh: RefreshToken = RefreshToken.for_user(user)
+            response_data = {
+                "email": user.email,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            }
+            serializer = UserLoginSuccessSerializer(data=response_data)
             if serializer.is_valid():
-                user: User = User.objects.filter(email=serializer.validated_data["email"]).first()
-
-                if user is None or not user.check_password(serializer.validated_data["password"]):
-                    return DRFResponse({"detail": "Invalid email or password."}, status=HTTP_401_UNAUTHORIZED)
-                if not user.is_active:
-                    return DRFResponse({"detail": "User account is disabled."}, status=HTTP_401_UNAUTHORIZED)
-                
-                refresh: RefreshToken = RefreshToken.for_user(user)
-                response_data = {
-                    "email": user.email,
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                }
-                serializer = UserLoginSuccessSerializer(data=response_data)
-                if serializer.is_valid():
-                    return DRFResponse(serializer.data, status=HTTP_200_OK)
-            return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+                return DRFResponse(serializer.data, status=HTTP_200_OK)
+        return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
