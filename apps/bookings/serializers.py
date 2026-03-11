@@ -5,12 +5,15 @@ from apps.bookings.models import Booking, BookingStatus
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a new booking."""
     class Meta:
+        """Meta options for the BookingCreateSerializer."""
         model = Booking
         fields = ("id", "room", "check_in", "check_out", "status", "total_price")
         read_only_fields = ("id", "status", "total_price")
 
     def validate(self, attrs: dict) -> dict:
+        """Custom validation to check room availability and date consistency."""
         room = attrs["room"]
         check_in = attrs["check_in"]
         check_out = attrs["check_out"]
@@ -35,6 +38,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data: dict) -> Booking:
+        """Override the create method to calculate total price and set the user from the request."""
         request = self.context["request"]
         room = validated_data["room"]
         check_in = validated_data["check_in"]
@@ -55,6 +59,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 
 class BookingListSerializer(serializers.ModelSerializer):
+    """Serializer for listing bookings with related user email, room title, and hotel name."""
     user_email = serializers.EmailField(source="user.email", read_only=True)
     room_title = serializers.CharField(source="room.title", read_only=True)
     hotel_name = serializers.CharField(source="room.hotel.name", read_only=True)
@@ -76,6 +81,7 @@ class BookingListSerializer(serializers.ModelSerializer):
 
 
 class AvailabilityQuerySerializer(serializers.Serializer):
+    """Serializer for validating availability check query parameters."""
     room = serializers.IntegerField()
     check_in = serializers.DateField()
     check_out = serializers.DateField()
@@ -89,6 +95,7 @@ class AvailabilityQuerySerializer(serializers.Serializer):
 
 
 class AvailabilityResponseSerializer(serializers.Serializer):
+    """Serializer for returning availability check results."""
     room = serializers.IntegerField()
     check_in = serializers.DateField()
     check_out = serializers.DateField()
@@ -96,7 +103,9 @@ class AvailabilityResponseSerializer(serializers.Serializer):
 
 
 class BookingCancelSerializer(serializers.ModelSerializer):
+    """Serializer for cancelling a booking, allowing only the status field to be updated."""
     class Meta:
+        """Meta options for the BookingCancelSerializer."""
         model = Booking
         fields = ("id", "status", "check_in", "check_out", "total_price")
         read_only_fields = fields

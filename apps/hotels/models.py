@@ -13,7 +13,19 @@ from apps.abstract.models import AbstractBaseModel
 
 
 class Hotel(AbstractBaseModel):
-    """Model representing a hotel."""
+    """
+    Model representing a hotel.
+
+    args:
+        name (str): The name of the hotel.
+        address (str): The address of the hotel.
+        city (str): The city where the hotel is located.
+        rating (int): The rating of the hotel (1-5).
+        description (str): A description of the hotel.
+    
+    relationships:
+        owner (User): The user who owns the hotel.
+    """
 
     NAME_MAX_LENGTH = 255
     ADDRESS_MAX_LENGTH = 255
@@ -87,7 +99,19 @@ class Hotel(AbstractBaseModel):
 
 
 class Room(AbstractBaseModel):
-    """Room inside a hotel."""
+    """
+    Room inside a hotel.
+
+    ## args:
+        hotel (Hotel): The hotel this room belongs to.
+        title (str): The title of the room.
+        price_per_night (Decimal): The price per night for this room.
+        capacity (int): The maximum number of guests this room can accommodate.
+        quantity (int): The number of identical rooms of this type available in the hotel.
+
+    ## relationships:
+        hotel (Hotel): The hotel this room belongs to.
+    """
 
     TITLE_MAX_LENGTH = 255
 
@@ -143,6 +167,18 @@ class Room(AbstractBaseModel):
 
 
 class Review(AbstractBaseModel):
+    """
+    Model representing a review of a hotel by a user.
+
+    ## args:
+        hotel (Hotel): The hotel being reviewed.
+        rating (int): The rating given to the hotel (1-5).
+        text (str): The text of the review.
+    
+    ## relationships:
+        user (User): The user who wrote the review.
+        hotel (Hotel): The hotel being reviewed.
+    """
     user = models.ForeignKey(
         "users.User", on_delete=models.CASCADE, related_name="reviews"
     )

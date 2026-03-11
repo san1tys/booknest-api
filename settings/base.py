@@ -16,24 +16,29 @@ AUTH_USER_MODEL = "users.User"
 # ------------------------
 # Apps
 # ------------------------
+UNFOLD_APPS = []
+try:
+    import unfold  # noqa: F401
+except ImportError:
+    UNFOLD_APPS = []
+else:
+    UNFOLD_APPS = [
+        # Must be before django.contrib.admin (overrides templates/static)
+        "unfold",
+        "unfold.contrib.filters",
+        "unfold.contrib.forms",
+        "unfold.contrib.inlines",
+    ]
+
 DJANGO_AND_THIRD_PARTY_APPS = [
     # Django
+    *UNFOLD_APPS,
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # unfold for admin dashboards
-    "unfold",
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
-    "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
-    "unfold.contrib.location_field",  # optional, if django-location-field package is used
-    "unfold.contrib.constance",  # optional, if django-constance package is used
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
@@ -49,11 +54,12 @@ PROJECT_APPS = [
 ]
 INSTALLED_APPS = DJANGO_AND_THIRD_PARTY_APPS + PROJECT_APPS
 UNFOLD = {
-    "SITE_HEADER": "Eatly admin panel",
-    "SITE_TITLE": "Eatly dashboards",
+    "SITE_HEADER": "Booknest admin panel",
+    "SITE_TITLE": "Booknest dashboards",
     "SITE_SUBTITLE": "User management",
     "THEME": "dark",
     "SHOW_THEME_TOGGLE": True,
+    "DASHBOARD_CALLBACK": "settings.unfold_dashboard.dashboard_callback",
     "COLOR_PALETTE": {
         "primary": "#10b981",
         "accent": "#f97316",
@@ -79,7 +85,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -117,9 +123,9 @@ USE_TZ = True
 # ------------------------
 # Static | Media
 # ------------------------
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
