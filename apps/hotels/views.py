@@ -1,10 +1,9 @@
 from typing import Any
 
-from django.db.models import QuerySet, Count
-
-from rest_framework.viewsets import ViewSet
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.db.models import QuerySet
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
 from rest_framework.status import (
@@ -17,8 +16,13 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
 )
-from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiExample
+from rest_framework.viewsets import ViewSet
 
+from apps.abstract.serializers import (
+    ErrorDetailSerializer,
+    MessageSerializer,
+    ValidationErrorSerializer,
+)
 from apps.hotels.models import Hotel, Room
 from apps.hotels.serializers import (
     HotelCreateUpdateSerializer,
@@ -26,11 +30,7 @@ from apps.hotels.serializers import (
     RoomCreateUpdateSerializer,
     RoomDetailSerializer,
 )
-from apps.abstract.serializers import (
-    ErrorDetailSerializer,
-    MessageSerializer,
-    ValidationErrorSerializer,
-)
+
 
 class HotelViewSet(ViewSet):
     """ViewSet for managing hotels."""
@@ -55,7 +55,9 @@ class HotelViewSet(ViewSet):
         url_name="create",
         permission_classes=[IsAuthenticated],
     )
-    def create_hotel(self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def create_hotel(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
         """
         Handle POST request to create a new hotel.
         Args:
@@ -66,10 +68,14 @@ class HotelViewSet(ViewSet):
             DRFResponse: A response object containing the created hotel data or error details.
         """
 
-        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(data=request.data)
+        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(
+            data=request.data
+        )
         if serializer.is_valid():
-            hotel: Hotel = serializer.save()
-            return DRFResponse(HotelDetailSerializer(hotel).data, status=HTTP_201_CREATED)
+            hotel = serializer.save(owner=request.user)
+            return DRFResponse(
+                HotelDetailSerializer(hotel).data, status=HTTP_201_CREATED
+            )
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     @extend_schema(
@@ -78,15 +84,21 @@ class HotelViewSet(ViewSet):
             HTTP_200_OK: HotelDetailSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
-            HTTP_403_FORBIDDEN:ErrorDetailSerializer,
+            HTTP_403_FORBIDDEN: ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
         },
         description="Update an existing hotel with the provided details. Requires authentication and ownership of the hotel.",
         summary="Update Hotel",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the hotel to update.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the hotel to update.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -95,7 +107,13 @@ class HotelViewSet(ViewSet):
         url_name="update",
         permission_classes=[IsAuthenticated],
     )
-    def update_hotel(self, request: DRFRequest, pk: int, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def update_hotel(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
         """
         Handle PUT request to update an existing hotel.
         Args:
@@ -110,17 +128,26 @@ class HotelViewSet(ViewSet):
         try:
             hotel: Hotel = Hotel.objects.get(pk=pk)
         except Hotel.DoesNotExist:
-            return DRFResponse({"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse(
+                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+            )
 
         if hotel.owner != request.user:
-            return DRFResponse({"detail": "You do not have permission to edit this hotel."}, status=HTTP_403_FORBIDDEN)
+            return DRFResponse(
+                {"detail": "You do not have permission to edit this hotel."},
+                status=HTTP_403_FORBIDDEN,
+            )
 
-        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(hotel, data=request.data)
+        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(
+            hotel, data=request.data
+        )
         if serializer.is_valid():
             updated_hotel: Hotel = serializer.save()
-            return DRFResponse(HotelDetailSerializer(updated_hotel).data, status=HTTP_200_OK)
+            return DRFResponse(
+                HotelDetailSerializer(updated_hotel).data, status=HTTP_200_OK
+            )
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
-    
+
     @extend_schema(
         responses={
             HTTP_200_OK: HotelDetailSerializer,
@@ -129,8 +156,14 @@ class HotelViewSet(ViewSet):
         description="Retrieve details of a specific hotel by its ID.",
         summary="Get Hotel Details",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the hotel to retrieve.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the hotel to retrieve.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -139,7 +172,13 @@ class HotelViewSet(ViewSet):
         url_name="details",
         permission_classes=[AllowAny],
     )
-    def hotel_details(self, request: DRFRequest, pk: int, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def hotel_details(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
         """
         Handle GET request to retrieve details of a specific hotel.
         Args:
@@ -155,8 +194,10 @@ class HotelViewSet(ViewSet):
             hotel: Hotel = Hotel.objects.get(pk=pk)
             return DRFResponse(HotelDetailSerializer(hotel).data, status=HTTP_200_OK)
         except Hotel.DoesNotExist:
-            return DRFResponse({"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND)
-    
+            return DRFResponse(
+                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+            )
+
     @extend_schema(
         responses={
             HTTP_200_OK: HotelDetailSerializer(many=True),
@@ -172,7 +213,9 @@ class HotelViewSet(ViewSet):
         url_name="list",
         permission_classes=[AllowAny],
     )
-    def list_hotels(self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def list_hotels(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
         """
         Handle GET request to list all hotels.
         Args:
@@ -186,7 +229,7 @@ class HotelViewSet(ViewSet):
         hotels: QuerySet[Hotel] = Hotel.objects.all()
         serializer: HotelDetailSerializer = HotelDetailSerializer(hotels, many=True)
         return DRFResponse(serializer.data, status=HTTP_200_OK)
-    
+
     @extend_schema(
         responses={
             HTTP_204_NO_CONTENT: MessageSerializer,
@@ -196,8 +239,14 @@ class HotelViewSet(ViewSet):
         description="Delete a specific hotel by its ID. Requires authentication and ownership of the hotel.",
         summary="Delete Hotel",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the hotel to delete.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the hotel to delete.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -206,7 +255,13 @@ class HotelViewSet(ViewSet):
         url_name="delete",
         permission_classes=[IsAuthenticated],
     )
-    def delete_hotel(self, request: DRFRequest, pk: int, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> DRFResponse:
+    def delete_hotel(
+        self,
+        request: DRFRequest,
+        pk: int,
+        *args: tuple[Any, ...],
+        **kwargs: dict[str, Any],
+    ) -> DRFResponse:
         """
         Handle DELETE request to delete a specific hotel.
         Args:
@@ -220,20 +275,28 @@ class HotelViewSet(ViewSet):
         try:
             hotel: Hotel = Hotel.objects.get(pk=pk)
         except Hotel.DoesNotExist:
-            return DRFResponse({"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse(
+                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+            )
 
         if hotel.owner != request.user:
-            return DRFResponse({"detail": "You do not have permission to delete this hotel."}, status=HTTP_403_FORBIDDEN)
+            return DRFResponse(
+                {"detail": "You do not have permission to delete this hotel."},
+                status=HTTP_403_FORBIDDEN,
+            )
 
         hotel.delete()
-        return DRFResponse({"detail": "Hotel deleted successfully."}, status=HTTP_204_NO_CONTENT)
-    
+        return DRFResponse(
+            {"detail": "Hotel deleted successfully."}, status=HTTP_204_NO_CONTENT
+        )
+
 
 # ------------------------------------------------------------
 # RoomViewSet for managing rooms within hotels
 # ------------------------------------------------------------
 class RoomViewSet(ViewSet):
     """ViewSet for managing rooms."""
+
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -269,7 +332,9 @@ class RoomViewSet(ViewSet):
         Returns:
             DRFResponse: A response object containing the created room data or error details.
         """
-        serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(data=request.data)
+        serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(
+            data=request.data
+        )
         if not serializer.is_valid():
             return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -294,8 +359,14 @@ class RoomViewSet(ViewSet):
         description="Update a room (only hotel owner). Requires auth.",
         summary="Update Room",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the room to update.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the room to update.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -332,7 +403,9 @@ class RoomViewSet(ViewSet):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(room, data=request.data)
+        serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(
+            room, data=request.data
+        )
         if serializer.is_valid():
             updated: Room = serializer.save()
             return DRFResponse(RoomDetailSerializer(updated).data, status=HTTP_200_OK)
@@ -346,8 +419,14 @@ class RoomViewSet(ViewSet):
         description="Retrieve details of a specific room.",
         summary="Get Room Details",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the room to retrieve.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the room to retrieve.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -452,8 +531,14 @@ class RoomViewSet(ViewSet):
         description="Delete a room (only hotel owner). Requires auth.",
         summary="Delete Room",
         parameters=[
-            OpenApiParameter(name="id", description="The primary key of the room to delete.", required=True, location=OpenApiParameter.PATH, type=int)
-        ]
+            OpenApiParameter(
+                name="id",
+                description="The primary key of the room to delete.",
+                required=True,
+                location=OpenApiParameter.PATH,
+                type=int,
+            )
+        ],
     )
     @action(
         detail=True,
@@ -491,4 +576,6 @@ class RoomViewSet(ViewSet):
             )
 
         room.delete()
-        return DRFResponse({"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT)
+        return DRFResponse(
+            {"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT
+        )

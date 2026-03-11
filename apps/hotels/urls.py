@@ -1,4 +1,5 @@
 from rest_framework.routers import DefaultRouter
+
 from apps.hotels.views import HotelViewSet, RoomViewSet
 
 router = DefaultRouter()
