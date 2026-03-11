@@ -36,6 +36,8 @@ urlpatterns = [
     # path('api/bookings/', view=include('apps.bookings.urls')),
 
     path("api/", include("apps.hotels.urls")),
+    
+    #Bookings app
     path("api/", include("apps.bookings.urls")),
 ]
 
