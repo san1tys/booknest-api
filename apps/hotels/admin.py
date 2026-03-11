@@ -1,7 +1,7 @@
 # apps/hotels/admin.py
 from django.contrib import admin
 
-from apps.hotels.models import Hotel, Room
+from apps.hotels.models import Hotel, Review, Room
 
 
 @admin.register(Hotel)
@@ -28,3 +28,10 @@ class RoomAdmin(admin.ModelAdmin):
     list_filter = ("hotel__city", "capacity", "quantity")
     search_fields = ("title", "hotel__name", "hotel__city")
     raw_id_fields = ("hotel",)
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("id", "hotel", "user", "rating", "created_at")
+    search_fields = ("hotel__name", "user__email", "text")
+    list_filter = ("rating", "created_at")

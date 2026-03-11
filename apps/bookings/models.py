@@ -9,6 +9,7 @@ from apps.abstract.models import AbstractBaseModel
 class BookingStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     CONFIRMED = "confirmed", "Confirmed"
+    COMPLETED = "completed", "Completed"
     CANCELLED = "cancelled", "Cancelled"
 
 
