@@ -23,13 +23,38 @@ from apps.abstract.serializers import (
     MessageSerializer,
     ValidationErrorSerializer,
 )
-from apps.hotels.models import Hotel, Room
+from apps.bookings.models import Booking, BookingStatus
+from apps.hotels.models import Hotel, Review, Room
 from apps.hotels.serializers import (
     HotelCreateUpdateSerializer,
     HotelDetailSerializer,
+    ReviewCreateSerializer,
+    ReviewListSerializer,
     RoomCreateUpdateSerializer,
     RoomDetailSerializer,
 )
+
+
+def _has_valid_booking_for_hotel(user, hotel_id: int) -> bool:
+    """
+    User can review a hotel only if they had at least one booking
+    for any room of that hotel with status confirmed or completed.
+    """
+    valid_statuses = []
+    # safest: support your enum values if differ
+    for s in ("CONFIRMED", "COMPLETED", "confirmed", "completed"):
+        valid_statuses.append(s)
+
+    return Booking.objects.filter(
+        user=user,
+        room__hotel_id=hotel_id,
+        status__in=(
+            [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
+            if hasattr(BookingStatus, "CONFIRMED")
+            and hasattr(BookingStatus, "COMPLETED")
+            else valid_statuses
+        ),
+    ).exists()
 
 
 class HotelViewSet(ViewSet):
@@ -289,6 +314,63 @@ class HotelViewSet(ViewSet):
         return DRFResponse(
             {"detail": "Hotel deleted successfully."}, status=HTTP_204_NO_CONTENT
         )
+
+    @extend_schema(
+        responses={HTTP_200_OK: ReviewListSerializer(many=True)},
+        summary="List hotel reviews",
+        description="Return all reviews for a specific hotel.",
+    )
+    @action(detail=True, methods=["get"], url_path="reviews")
+    def list_reviews(self, request, pk=None):
+        queryset = Review.objects.select_related("user", "hotel").filter(hotel_id=pk)
+        serializer = ReviewListSerializer(queryset, many=True)
+        return DRFResponse(serializer.data, status=HTTP_200_OK)
+
+    @extend_schema(
+        request=ReviewCreateSerializer,
+        responses={
+            HTTP_201_CREATED: ReviewListSerializer,
+            HTTP_400_BAD_REQUEST: dict,
+        },
+        summary="Create hotel review",
+        description=(
+            "Create a review for a hotel. Allowed only if the user had a booking "
+            "for this hotel with status confirmed/completed."
+        ),
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="reviews",
+        permission_classes=[IsAuthenticated],
+    )
+    def create_review(self, request, pk=None):
+        # prevent review without valid booking
+        if not _has_valid_booking_for_hotel(request.user, int(pk)):
+            return DRFResponse(
+                {
+                    "detail": "You can review this hotel only after a confirmed/completed booking."
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        if Review.objects.filter(user=request.user, hotel_id=pk).exists():
+            return DRFResponse(
+                {"detail": "You already reviewed this hotel."},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        # prevent duplicate review for same hotel by same user (unique_together handles too)
+        serializer = ReviewCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        review = Review.objects.create(
+            user=request.user,
+            hotel_id=pk,
+            **serializer.validated_data,
+        )
+
+        return DRFResponse(ReviewListSerializer(review).data, status=HTTP_201_CREATED)
 
 
 # ------------------------------------------------------------

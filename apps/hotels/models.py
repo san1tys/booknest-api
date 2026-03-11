@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.forms import ValidationError
 
@@ -136,3 +137,26 @@ class Room(AbstractBaseModel):
 
     def __str__(self) -> str:
         return f"{self.title} @ {self.hotel.name}"
+
+
+## Review
+
+
+class Review(AbstractBaseModel):
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="reviews"
+    )
+    hotel = models.ForeignKey(
+        "hotels.Hotel", on_delete=models.CASCADE, related_name="reviews"
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    text = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ("user", "hotel")
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"Review({self.user.email} -> {self.hotel.name}, {self.rating})"

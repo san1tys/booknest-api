@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.hotels.models import Hotel, Room
+from apps.hotels.models import Hotel, Review, Room
 from apps.users.serializers import UserSerializer
 
 
@@ -102,3 +102,18 @@ class RoomDetailSerializer(serializers.ModelSerializer):
             "created_at",
         )
         read_only_fields = ("id", "created_at")
+
+
+class ReviewListSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ("id", "hotel", "user_email", "rating", "text", "created_at")
+        read_only_fields = ("id", "hotel", "user_email", "created_at")
+
+
+class ReviewCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ("rating", "text")
