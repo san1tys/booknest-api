@@ -1,6 +1,8 @@
 # apps/hotels/admin.py
 from django.contrib import admin
+
 from apps.hotels.models import Hotel, Room
+
 
 @admin.register(Hotel)
 class HotelAdmin(admin.ModelAdmin):
@@ -10,6 +12,7 @@ class HotelAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("name", "address", "city", "rating", "description")}),
     )
+
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
