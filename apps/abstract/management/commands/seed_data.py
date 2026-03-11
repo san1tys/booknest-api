@@ -9,9 +9,10 @@ from django.core.management.base import BaseCommand
 
 # Project modules
 from apps.users.models import User
-from apps.hotels.models import Hotel, Room
+from apps.hotels.models import Hotel
 from apps.bookings.models import Booking
-from apps.hotels.models import Review
+from apps.rooms.models import Room
+from apps.reviews.models import Review
 
 
 class Command(BaseCommand):

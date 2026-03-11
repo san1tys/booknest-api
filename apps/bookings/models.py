@@ -40,7 +40,7 @@ class Booking(AbstractBaseModel):
         help_text="The user who made the booking.",
     )
     room = models.ForeignKey(
-        "hotels.Room",
+        "rooms.Room",
         on_delete=models.CASCADE,
         related_name="bookings",
         verbose_name="Room",

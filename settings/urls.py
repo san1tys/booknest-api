@@ -43,10 +43,9 @@ urlpatterns = [
     # User app
     path("api/users/", include("apps.users.urls")),
     path("api/hotels/", include("apps.hotels.urls")),
+    path("api/hotels/", include("apps.rooms.urls")),
+    path("api/hotels/", include("apps.reviews.urls")),
     path("api/bookings/", include("apps.bookings.urls")),
-    path("api/", include("apps.hotels.urls")),
-    # Bookings app
-    path("api/", include("apps.bookings.urls")),
 ]
 
 if settings.DEBUG:

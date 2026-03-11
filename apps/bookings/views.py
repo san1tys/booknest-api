@@ -1,6 +1,7 @@
+from datetime import date
 from typing import Any
 
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -24,6 +25,7 @@ from apps.bookings.serializers import (
     BookingCreateSerializer,
     BookingListSerializer,
 )
+from apps.users.models import User
 
 
 class BookingViewSet(ViewSet):
@@ -77,7 +79,7 @@ class BookingViewSet(ViewSet):
             DRFResponse: The HTTP response containing the created booking details or error information.
         """
 
-        serializer = BookingCreateSerializer(
+        serializer: BookingCreateSerializer = BookingCreateSerializer(
             data=request.data, context={"request": request}
         )
 
@@ -118,11 +120,11 @@ class BookingViewSet(ViewSet):
             DRFResponse: The HTTP response containing a list of bookings or error information.
         """
 
-        queryset = Booking.objects.select_related(
+        queryset: QuerySet[Booking] = Booking.objects.select_related(
             "user", "room", "room__hotel", "room__hotel__owner"
         ).order_by("-created_at")
 
-        user = request.user
+        user: User = request.user
 
         if user.hotels.exists():
             queryset = queryset.filter(room__hotel__owner=user)
@@ -184,27 +186,27 @@ class BookingViewSet(ViewSet):
         Returns:
             DRFResponse: The HTTP response indicating room availability or error information.
         """
-        serializer = AvailabilityQuerySerializer(data=request.query_params)
+        serializer: AvailabilityQuerySerializer = AvailabilityQuerySerializer(data=request.query_params)
         if not serializer.is_valid():
             return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-        room = serializer.validated_data["room"]
-        check_in = serializer.validated_data["check_in"]
-        check_out = serializer.validated_data["check_out"]
+        room: int = serializer.validated_data["room"]
+        check_in: date = serializer.validated_data["check_in"]
+        check_out: date = serializer.validated_data["check_out"]
 
-        overlapping_bookings = Booking.objects.filter(
+        overlapping_bookings: QuerySet[Booking] = Booking.objects.filter(
             room_id=room,
             status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED],
         ).filter(Q(check_in__lt=check_out) & Q(check_out__gt=check_in))
 
-        response_data = {
+        response_data: dict[str, Any] = {
             "room": room,
             "check_in": check_in,
             "check_out": check_out,
             "available": not overlapping_bookings.exists(),
         }
 
-        response_serializer = AvailabilityResponseSerializer(instance=response_data)
+        response_serializer: AvailabilityResponseSerializer = AvailabilityResponseSerializer(instance=response_data)
         return DRFResponse(response_serializer.data, status=HTTP_200_OK)
 
     @extend_schema(
@@ -252,7 +254,7 @@ class BookingViewSet(ViewSet):
             DRFResponse: The HTTP response containing the details of the cancelled booking or error information.
         """
         try:
-            booking = Booking.objects.select_related(
+            booking: Booking = Booking.objects.select_related(
                 "user", "room", "room__hotel", "room__hotel__owner"
             ).get(pk=pk)
         except Booking.DoesNotExist:
@@ -260,8 +262,8 @@ class BookingViewSet(ViewSet):
                 {"detail": "Booking not found"}, status=HTTP_404_NOT_FOUND
             )
 
-        is_booking_owner = booking.user == request.user
-        is_hotel_owner = booking.room.hotel.owner == request.user
+        is_booking_owner: bool = booking.user == request.user
+        is_hotel_owner: bool = booking.room.hotel.owner == request.user
 
         if not (is_booking_owner or is_hotel_owner):
             return DRFResponse(
@@ -278,5 +280,5 @@ class BookingViewSet(ViewSet):
         booking.status = BookingStatus.CANCELLED
         booking.save()
 
-        serializer = BookingCancelSerializer(booking)
+        serializer: BookingCancelSerializer = BookingCancelSerializer(booking)
         return DRFResponse(serializer.data, status=HTTP_200_OK)

@@ -49,6 +49,8 @@ PROJECT_APPS = [
     # Local apps
     "apps.users",
     "apps.hotels",
+    "apps.rooms",
+    "apps.reviews",
     "apps.bookings",
     "apps.abstract",
 ]

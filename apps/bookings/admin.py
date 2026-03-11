@@ -5,6 +5,7 @@ from apps.bookings.models import Booking
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
+    """Admin configuration for the Booking model."""
     list_display = (
         "id",
         "user",

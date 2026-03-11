@@ -29,6 +29,7 @@ from apps.users.serializers import (
 
 
 class UserViewSet(ViewSet):
+    """ViewSet for user-related actions like registration, login, and retrieving user details."""
     permission_classes = [AllowAny]
 
     # Get user
@@ -67,8 +68,8 @@ class UserViewSet(ViewSet):
         #         {"detail": "Authentication credentials were not provided."},
         #         status=HTTP_401_UNAUTHORIZED,
         #     )
-        user = request.user
-        serializer = UserSerializer(user)
+        user: User = request.user
+        serializer: UserSerializer = UserSerializer(user)
         return DRFResponse(serializer.data, status=HTTP_200_OK)
 
     # Register user
@@ -108,10 +109,10 @@ class UserViewSet(ViewSet):
                 {"detail": "You are already authenticated."},
                 status=HTTP_401_UNAUTHORIZED,
             )
-        serializer = UserRegisterSerializer(data=request.data)
+        serializer: UserRegisterSerializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            response_serializer = UserSerializer(user)
+            user: User = serializer.save()
+            response_serializer: UserSerializer = UserSerializer(user)
             return DRFResponse(response_serializer.data, status=HTTP_201_CREATED)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -155,7 +156,7 @@ class UserViewSet(ViewSet):
                 status=HTTP_405_METHOD_NOT_ALLOWED,
             )
 
-        serializer = UserLoginSerializer(data=request.data)
+        serializer: UserLoginSerializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
             user: User = User.objects.filter(
                 email=serializer.validated_data["email"]
@@ -175,12 +176,12 @@ class UserViewSet(ViewSet):
                 )
 
             refresh: RefreshToken = RefreshToken.for_user(user)
-            response_data = {
+            response_data: dict[str, Any] = {
                 "email": user.email,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
             }
-            serializer = UserLoginSuccessSerializer(data=response_data)
+            serializer: UserLoginSuccessSerializer = UserLoginSuccessSerializer(data=response_data)
             if serializer.is_valid():
                 return DRFResponse(serializer.data, status=HTTP_200_OK)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)

@@ -5,19 +5,15 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 # Project modules
-from apps.hotels.views import HotelViewSet
+from apps.rooms.views import RoomViewSet
 
-
-router: DefaultRouter = DefaultRouter(
-    trailing_slash=False
-)
+router: DefaultRouter = DefaultRouter(trailing_slash=False)
 
 router.register(
-    prefix="hotels",
-    viewset=HotelViewSet,
-    basename="hotel",
+    prefix="rooms",
+    viewset=RoomViewSet,
+    basename="room",
 )
-
 
 urlpatterns = [
     path("v1/", include(router.urls)),
