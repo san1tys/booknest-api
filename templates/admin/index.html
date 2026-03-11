@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% load i18n unfold %}
+
+{% block content %}
+    <div class="flex flex-col gap-6 mb-6">
+        {% component "unfold/components/card.html" with title="Dashboard filters" icon="tune" %}
+            <form method="get" class="flex flex-col gap-3 lg:flex-row lg:items-end">
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm text-font-subtle-light dark:text-font-subtle-dark" for="weeks">
+                        {% trans "Weeks" %}
+                    </label>
+                    <input id="weeks" name="weeks" type="number" min="4" max="52" value="{{ dashboard_weeks|default:12 }}" class="border border-base-200 rounded-default px-3 py-2 bg-white dark:bg-base-900 dark:border-base-800 w-28" />
+                </div>
+
+                <div>
+                    <button type="submit" class="bg-primary-600 text-white rounded-default px-4 py-2">
+                        {% trans "Apply" %}
+                    </button>
+                </div>
+            </form>
+        {% endcomponent %}
+
+        {% component "unfold/components/flex.html" with class="gap-4 flex-col lg:flex-row" %}
+            {% component "unfold/components/card.html" with title="Total earnings" icon="payments" %}
+                <div class="text-3xl font-semibold text-important">
+                    {{ dashboard_total_period|default:"0.00" }}
+                </div>
+                <div class="text-sm text-font-subtle-light dark:text-font-subtle-dark">
+                    {% blocktrans with weeks=dashboard_weeks|default:12 %}Last {{ weeks }} weeks{% endblocktrans %}
+                </div>
+            {% endcomponent %}
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with title="Earnings by hotel" %}
+            {% component "unfold/components/table.html" with table=dashboard_hotels_totals_table card_included=1 striped=1 height=520 %}{% endcomponent %}
+        {% endcomponent %}
+    </div>
+
+    <div class="flex flex-col lg:flex-row lg:gap-8">
+        <div class="grow">
+            {% include "unfold/helpers/app_list_default.html" %}
+        </div>
+
+        {% include "unfold/helpers/history.html" %}
+    </div>
+{% endblock %}
