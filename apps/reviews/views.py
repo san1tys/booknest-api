@@ -64,9 +64,9 @@ class HotelReviewViewSet(ViewSet):
         Returns:
             DRFResponse: The HTTP response containing the list of reviews or error information.
         """
-        queryset: QuerySet[Review] = Review.objects.select_related("user", "hotel").filter(
-            hotel_id=hotel_id
-        )
+        queryset: QuerySet[Review] = Review.objects.select_related(
+            "user", "hotel"
+        ).filter(hotel_id=hotel_id)
         serializer: ReviewListSerializer = ReviewListSerializer(queryset, many=True)
         return DRFResponse(serializer.data, status=HTTP_200_OK)
 
@@ -83,7 +83,9 @@ class HotelReviewViewSet(ViewSet):
             "for this hotel with status confirmed/completed."
         ),
     )
-    def create(self, request: DRFRequest, hotel_id: int, *args: Any, **kwargs: Any) -> DRFResponse:
+    def create(
+        self, request: DRFRequest, hotel_id: int, *args: Any, **kwargs: Any
+    ) -> DRFResponse:
         """
         Handle POST request to create a review for a hotel.
         Validations:
@@ -126,4 +128,3 @@ class HotelReviewViewSet(ViewSet):
         )
 
         return DRFResponse(ReviewListSerializer(review).data, status=HTTP_201_CREATED)
-

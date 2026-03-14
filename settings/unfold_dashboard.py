@@ -1,4 +1,3 @@
-import json
 from datetime import timedelta
 from decimal import Decimal
 
@@ -76,7 +75,9 @@ def dashboard_callback(request, context: dict):
             price_per_night * nights
         )
 
-    hotels = list(Hotel.objects.only("id", "name").order_by("name").values("id", "name"))
+    hotels = list(
+        Hotel.objects.only("id", "name").order_by("name").values("id", "name")
+    )
     total_period = sum(total_by_hotel.values(), Decimal("0"))
 
     hotel_rows = []

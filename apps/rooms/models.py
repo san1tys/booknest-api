@@ -67,4 +67,3 @@ class Room(AbstractBaseModel):
 
     def __str__(self) -> str:
         return f"{self.title} @ {self.hotel.name}"
-

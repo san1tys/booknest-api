@@ -32,4 +32,3 @@ class Review(AbstractBaseModel):
 
     def __str__(self) -> str:
         return f"Review({self.user.email} -> {self.hotel.name}, {self.rating})"
-

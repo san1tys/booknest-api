@@ -7,8 +7,10 @@ from apps.rooms.models import Room
 
 class RoomCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating a room."""
+
     class Meta:
         """Meta options for the RoomCreateUpdateSerializer."""
+
         model = Room
         fields = ("id", "hotel", "title", "price_per_night", "capacity", "quantity")
 
@@ -28,8 +30,10 @@ class RoomCreateUpdateSerializer(serializers.ModelSerializer):
 
 class RoomDetailSerializer(serializers.ModelSerializer):
     """Serializer for retrieving room details."""
+
     class Meta:
         """Meta options for the RoomDetailSerializer."""
+
         model = Room
         fields = (
             "id",
@@ -41,4 +45,3 @@ class RoomDetailSerializer(serializers.ModelSerializer):
             "created_at",
         )
         read_only_fields = ("id", "created_at")
-

@@ -21,7 +21,7 @@ class Hotel(AbstractBaseModel):
         city (str): The city where the hotel is located.
         rating (int): The rating of the hotel (1-5).
         description (str): A description of the hotel.
-    
+
     relationships:
         owner (User): The user who owns the hotel.
     """

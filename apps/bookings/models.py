@@ -8,6 +8,7 @@ from apps.abstract.models import AbstractBaseModel
 
 class BookingStatus(models.TextChoices):
     """Enumeration of possible booking statuses."""
+
     PENDING = "pending", "Pending"
     CONFIRMED = "confirmed", "Confirmed"
     COMPLETED = "completed", "Completed"
@@ -69,6 +70,7 @@ class Booking(AbstractBaseModel):
 
     class Meta:
         """Meta options for the Booking model."""
+
         ordering = ["-created_at"]
 
     def clean(self) -> None:

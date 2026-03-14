@@ -30,6 +30,7 @@ from apps.users.serializers import (
 
 class UserViewSet(ViewSet):
     """ViewSet for user-related actions like registration, login, and retrieving user details."""
+
     permission_classes = [AllowAny]
 
     # Get user
@@ -181,7 +182,9 @@ class UserViewSet(ViewSet):
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
             }
-            serializer: UserLoginSuccessSerializer = UserLoginSuccessSerializer(data=response_data)
+            serializer: UserLoginSuccessSerializer = UserLoginSuccessSerializer(
+                data=response_data
+            )
             if serializer.is_valid():
                 return DRFResponse(serializer.data, status=HTTP_200_OK)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)

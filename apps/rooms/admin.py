@@ -17,4 +17,3 @@ class RoomAdmin(admin.ModelAdmin):
     list_filter = ("hotel__city", "capacity", "quantity")
     search_fields = ("title", "hotel__name", "hotel__city")
     raw_id_fields = ("hotel",)
-

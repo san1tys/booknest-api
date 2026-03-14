@@ -61,7 +61,7 @@ class RoomViewSet(ViewSet):
             request (DRFRequest): The incoming request containing room data.
         returns:
             DRFResponse: The response containing the created room details or error messages.
-        
+
         """
         serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(
             data=request.data
@@ -302,4 +302,3 @@ class RoomViewSet(ViewSet):
         return DRFResponse(
             {"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT
         )
-

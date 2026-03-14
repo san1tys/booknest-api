@@ -186,7 +186,9 @@ class BookingViewSet(ViewSet):
         Returns:
             DRFResponse: The HTTP response indicating room availability or error information.
         """
-        serializer: AvailabilityQuerySerializer = AvailabilityQuerySerializer(data=request.query_params)
+        serializer: AvailabilityQuerySerializer = AvailabilityQuerySerializer(
+            data=request.query_params
+        )
         if not serializer.is_valid():
             return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -206,7 +208,9 @@ class BookingViewSet(ViewSet):
             "available": not overlapping_bookings.exists(),
         }
 
-        response_serializer: AvailabilityResponseSerializer = AvailabilityResponseSerializer(instance=response_data)
+        response_serializer: AvailabilityResponseSerializer = (
+            AvailabilityResponseSerializer(instance=response_data)
+        )
         return DRFResponse(response_serializer.data, status=HTTP_200_OK)
 
     @extend_schema(

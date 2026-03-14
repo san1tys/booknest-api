@@ -1,18 +1,20 @@
 # Python modules
-from typing import Any, List, Dict, Tuple
-from random import choice, randint, uniform
 from datetime import datetime, timedelta
+from random import choice, randint, uniform
+from typing import Any
+
+from django.core.management.base import BaseCommand
 
 # Django modules
 from django.utils import timezone
-from django.core.management.base import BaseCommand
+
+from apps.bookings.models import Booking
+from apps.hotels.models import Hotel
+from apps.reviews.models import Review
+from apps.rooms.models import Room
 
 # Project modules
 from apps.users.models import User
-from apps.hotels.models import Hotel
-from apps.bookings.models import Booking
-from apps.rooms.models import Room
-from apps.reviews.models import Review
 
 
 class Command(BaseCommand):
@@ -21,23 +23,39 @@ class Command(BaseCommand):
     help = "Generate users, hotels, rooms, bookings and reviews."
 
     FIRST_NAMES = (
-        "Alice", "Bob", "Charlie", "Diana", "Eve", "Frank",
-        "Grace", "Ivan", "John", "Oliver", "Lucas", "Daniel",
-        "Michael", "Ethan", "Samuel", "Henry", "David"
+        "Alice",
+        "Bob",
+        "Charlie",
+        "Diana",
+        "Eve",
+        "Frank",
+        "Grace",
+        "Ivan",
+        "John",
+        "Oliver",
+        "Lucas",
+        "Daniel",
+        "Michael",
+        "Ethan",
+        "Samuel",
+        "Henry",
+        "David",
     )
 
     LAST_NAMES = (
-        "Smith", "Johnson", "Brown", "Williams", "Miller",
-        "Davis", "Wilson", "Moore", "Taylor", "Anderson"
+        "Smith",
+        "Johnson",
+        "Brown",
+        "Williams",
+        "Miller",
+        "Davis",
+        "Wilson",
+        "Moore",
+        "Taylor",
+        "Anderson",
     )
 
-    EMAIL_DOMAINS = (
-        "gmail.com",
-        "mail.com",
-        "example.com",
-        "kbtu.kz",
-        "test.com"
-    )
+    EMAIL_DOMAINS = ("gmail.com", "mail.com", "example.com", "kbtu.kz", "test.com")
 
     HOTEL_NAMES = (
         "Grand Hotel",
@@ -47,17 +65,10 @@ class Command(BaseCommand):
         "Royal Garden",
         "Skyline Hotel",
         "City Comfort",
-        "Luxury Stay"
+        "Luxury Stay",
     )
 
-    CITIES = (
-        "Almaty",
-        "Astana",
-        "Shymkent",
-        "Aktau",
-        "Atyrau",
-        "Karaganda"
-    )
+    CITIES = ("Almaty", "Astana", "Shymkent", "Aktau", "Atyrau", "Karaganda")
 
     ROOM_TITLES = (
         "Standard Room",
@@ -65,7 +76,7 @@ class Command(BaseCommand):
         "Family Suite",
         "Luxury Suite",
         "Single Room",
-        "Double Room"
+        "Double Room",
     )
 
     REVIEW_TEXTS = (
@@ -74,22 +85,17 @@ class Command(BaseCommand):
         "Amazing location and service.",
         "Would definitely visit again.",
         "Nice experience overall.",
-        "Good value for money."
+        "Good value for money.",
     )
 
-    STATUSES = (
-        "pending",
-        "confirmed",
-        "canceled",
-        "completed"
-    )
+    STATUSES = ("pending", "confirmed", "canceled", "completed")
 
     # ---------------- USERS ---------------- #
 
     def __generate_users(self, count: int = 50) -> None:
 
         users_before = User.objects.count()
-        users: List[User] = []
+        users: list[User] = []
 
         for i in range(count):
 
@@ -103,7 +109,7 @@ class Command(BaseCommand):
                     last_name=last_name,
                     is_active=True,
                     is_staff=False,
-                    created_at=timezone.now()
+                    created_at=timezone.now(),
                 )
             )
 
@@ -112,9 +118,7 @@ class Command(BaseCommand):
         users_after = User.objects.count()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {users_after - users_before} users"
-            )
+            self.style.SUCCESS(f"Created {users_after - users_before} users")
         )
 
     # ---------------- HOTELS ---------------- #
@@ -124,7 +128,7 @@ class Command(BaseCommand):
         users = list(User.objects.all())
 
         hotels_before = Hotel.objects.count()
-        hotels: List[Hotel] = []
+        hotels: list[Hotel] = []
 
         for _ in range(count):
 
@@ -138,7 +142,7 @@ class Command(BaseCommand):
                     address=f"{randint(1,200)} Main Street",
                     rating=randint(1, 5),
                     description="Nice hotel with great service.",
-                    created_at=timezone.now()
+                    created_at=timezone.now(),
                 )
             )
 
@@ -147,9 +151,7 @@ class Command(BaseCommand):
         hotels_after = Hotel.objects.count()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {hotels_after - hotels_before} hotels"
-            )
+            self.style.SUCCESS(f"Created {hotels_after - hotels_before} hotels")
         )
 
     # ---------------- ROOMS ---------------- #
@@ -159,7 +161,7 @@ class Command(BaseCommand):
         hotels = list(Hotel.objects.all())
 
         rooms_before = Room.objects.count()
-        rooms: List[Room] = []
+        rooms: list[Room] = []
 
         for hotel in hotels:
 
@@ -172,7 +174,7 @@ class Command(BaseCommand):
                         price_per_night=round(uniform(40, 300), 2),
                         capacity=randint(1, 4),
                         quantity=randint(1, 10),
-                        created_at=timezone.now()
+                        created_at=timezone.now(),
                     )
                 )
 
@@ -181,9 +183,7 @@ class Command(BaseCommand):
         rooms_after = Room.objects.count()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {rooms_after - rooms_before} rooms"
-            )
+            self.style.SUCCESS(f"Created {rooms_after - rooms_before} rooms")
         )
 
     # ---------------- BOOKINGS ---------------- #
@@ -194,7 +194,7 @@ class Command(BaseCommand):
         rooms = list(Room.objects.all())
 
         bookings_before = Booking.objects.count()
-        bookings: List[Booking] = []
+        bookings: list[Booking] = []
 
         for _ in range(count):
 
@@ -215,7 +215,7 @@ class Command(BaseCommand):
                     check_out=check_out,
                     status=choice(self.STATUSES),
                     total_price=total_price,
-                    created_at=timezone.now()
+                    created_at=timezone.now(),
                 )
             )
 
@@ -224,9 +224,7 @@ class Command(BaseCommand):
         bookings_after = Booking.objects.count()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {bookings_after - bookings_before} bookings"
-            )
+            self.style.SUCCESS(f"Created {bookings_after - bookings_before} bookings")
         )
 
     # ---------------- REVIEWS ---------------- #
@@ -237,7 +235,7 @@ class Command(BaseCommand):
         hotels = list(Hotel.objects.all())
 
         reviews_before = Review.objects.count()
-        reviews: List[Review] = []
+        reviews: list[Review] = []
 
         for _ in range(count):
 
@@ -247,7 +245,7 @@ class Command(BaseCommand):
                     hotel=choice(hotels),
                     rating=randint(1, 5),
                     text=choice(self.REVIEW_TEXTS),
-                    created_at=timezone.now()
+                    created_at=timezone.now(),
                 )
             )
 
@@ -256,14 +254,12 @@ class Command(BaseCommand):
         reviews_after = Review.objects.count()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {reviews_after - reviews_before} reviews"
-            )
+            self.style.SUCCESS(f"Created {reviews_after - reviews_before} reviews")
         )
 
     # ---------------- HANDLE ---------------- #
 
-    def handle(self, *args: Tuple[Any], **kwargs: Dict[str, Any]) -> None:
+    def handle(self, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:
 
         start_time = datetime.now()
 
