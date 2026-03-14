@@ -16,9 +16,10 @@ from rest_framework.viewsets import ViewSet
 from apps.bookings.models import Booking, BookingStatus
 from apps.reviews.models import Review
 from apps.reviews.serializers import ReviewCreateSerializer, ReviewListSerializer
+from apps.users.models import User
 
 
-def _has_valid_booking_for_hotel(user, hotel_id: int) -> bool:
+def _has_valid_booking_for_hotel(user: User, hotel_id: int) -> bool:
     """
     User can review a hotel only if they had at least one booking
     for any room of that hotel with status confirmed or completed.
@@ -54,7 +55,9 @@ class HotelReviewViewSet(ViewSet):
         summary="List hotel reviews",
         description="Return all reviews for a specific hotel.",
     )
-    def list(self, request: DRFRequest, hotel_id: int, *args: Any, **kwargs: Any):
+    def list(
+        self, request: DRFRequest, hotel_id: int, *args: Any, **kwargs: Any
+    ) -> DRFResponse:
         """Handle GET request to list reviews for a hotel.
         Args:
             request (DRFRequest): The incoming HTTP request.

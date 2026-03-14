@@ -14,8 +14,8 @@ class UserManager(BaseUserManager):
     """Custom user manager to handle user creation and superuser creation using email as the unique identifier."""
 
     def create_user(
-        self, email: str, password: str | None = None, **extra_fields: dict[str, Any]
-    ):
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> "User":
         """Create and save a user with the given email and password."""
         if not email:
             raise ValueError("Email is required")
@@ -26,8 +26,8 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, email: str, password: str | None = None, **extra_fields: dict[str, Any]
-    ):
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> "User":
         """Create and save a superuser with the given email and password."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -56,6 +56,6 @@ class User(
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the string representation of the user, which is their email address."""
         return self.email

@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.models import Q
 from rest_framework import serializers
 
@@ -39,7 +41,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def create(self, validated_data: dict) -> Booking:
+    def create(self, validated_data: dict[str, Any]) -> Booking:
         """Override the create method to calculate total price and set the user from the request."""
         request = self.context["request"]
         room = validated_data["room"]
@@ -90,7 +92,7 @@ class AvailabilityQuerySerializer(serializers.Serializer):
     check_in = serializers.DateField()
     check_out = serializers.DateField()
 
-    def validate(self, attrs: dict) -> dict:
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if attrs["check_out"] <= attrs["check_in"]:
             raise serializers.ValidationError(
                 {"check_out": "Check-out date must be after check-in date."}

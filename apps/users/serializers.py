@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.users.models import User
@@ -14,7 +16,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ("email", "password", "first_name", "last_name")
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> User:
         """Create a new user instance with the provided validated data."""
         password = validated_data.pop("password")
         return User.objects.create_user(password=password, **validated_data)

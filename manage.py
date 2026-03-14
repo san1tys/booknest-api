@@ -4,7 +4,7 @@ import sys
 from settings.conf import ENV_ID, ENV_POSSIBLE_OPTIONS
 
 
-def main():
+def main() -> None:
     """Run administrative tasks."""
     assert (
         ENV_ID in ENV_POSSIBLE_OPTIONS

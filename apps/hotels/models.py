@@ -90,5 +90,5 @@ class Hotel(AbstractBaseModel):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

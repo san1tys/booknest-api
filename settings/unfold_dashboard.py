@@ -1,13 +1,15 @@
 from datetime import timedelta
 from decimal import Decimal
+from typing import Any
 
+from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.bookings.models import Booking, BookingStatus
 from apps.hotels.models import Hotel
 
 
-def dashboard_callback(request, context: dict):
+def dashboard_callback(request: HttpRequest, context: dict[str, Any]) -> dict[str, Any]:
     """
     Inject earnings data into Unfold admin index context.
 

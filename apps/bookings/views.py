@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
+from rest_framework.serializers import Serializer
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
@@ -35,7 +36,7 @@ class BookingViewSet(ViewSet):
     serializer_class = BookingListSerializer
     queryset = Booking.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[Serializer]:
         """Return serializer class based on current action"""
         if self.action == "create_booking":
             return BookingCreateSerializer
