@@ -55,21 +55,6 @@ PROJECT_APPS = [
     "apps.abstract",
 ]
 INSTALLED_APPS = DJANGO_AND_THIRD_PARTY_APPS + PROJECT_APPS
-UNFOLD = {
-    "SITE_HEADER": "Booknest admin panel",
-    "SITE_TITLE": "Booknest dashboards",
-    "SITE_SUBTITLE": "User management",
-    "THEME": "dark",
-    "SHOW_THEME_TOGGLE": True,
-    "DASHBOARD_CALLBACK": "settings.unfold_dashboard.dashboard_callback",
-    "COLOR_PALETTE": {
-        "primary": "#10b981",
-        "accent": "#f97316",
-        "background": "#111827",
-        "foreground": "#f3f4f6",
-        "muted": "#6b7280",
-    },
-}
 
 
 # ------------------------
@@ -115,25 +100,32 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ------------------------
+
+# ----------------------------------------------
 # Internationalization
-# ------------------------
-LANGUAGE_CODE = "en-us"
-LANGUAGES = (
-    ("en-us", "English"),
-    ("ru", "Russian"),
-    ("kk", "Kazakh"),
-)
-TIME_ZONE = "UTC"
+#
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ------------------------
+# ----------------------------------------------
 # Static | Media
-# ------------------------
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+#
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# ----------------------------------------------
+# Celery Configuration
+#
+_celery_redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"  # noqa: F405
+CELERY_BROKER_URL = _celery_redis_url
+CELERY_RESULT_BACKEND = _celery_redis_url
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

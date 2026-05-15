@@ -2,6 +2,8 @@ services:
   web:
     build:
       context: .
+      args:
+        APP_ENV: ${BOOKNEST_ENV_ID:-local}
     ports:
       - "8000:8000"
     volumes:
@@ -10,7 +12,7 @@ services:
       - path: .env
         required: false
     environment:
-      BOOKNEST_ENV_ID: ${BOOKNEST_ENV_ID}
+      BOOKNEST_ENV_ID: ${BOOKNEST_ENV_ID:-local}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
@@ -21,16 +23,7 @@ services:
         required: false
       redis:
         condition: service_healthy
-    command:
-      - /bin/sh
-      - -c
-      - >
-        if [ "$BOOKNEST_ENV_ID" = "prod" ]; then
-          python manage.py migrate &&
-          gunicorn settings.wsgi:application --bind 0.0.0.0:8000;
-        else
-          python manage.py runserver 0.0.0.0:8000;
-        fi
+    command: ["/bin/sh", "/app/scripts/start.sh"]
 
   redis:
     image: redis:7-alpine

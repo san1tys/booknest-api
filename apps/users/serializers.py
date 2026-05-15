@@ -30,7 +30,21 @@ class UserSerializer(serializers.ModelSerializer):
         """Meta class for UserSerializer."""
 
         model = User
-        fields = ("id", "email", "first_name", "last_name", "created_at")
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "is_email_verified",
+            "created_at",
+        )
+
+
+class UserRegisterResponseSerializer(serializers.Serializer):
+    """Serializer for a successful registration response."""
+
+    detail = serializers.CharField()
+    user = UserSerializer()
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -56,6 +70,25 @@ class UserLoginSuccessSerializer(serializers.Serializer):
     #     """Meta class for UserLoginSuccessSerializer."""
 
     #     fields = ("email", "access", "refresh")
+
+
+class EmailVerificationSerializer(serializers.Serializer):
+    """Serializer for verifying an email with an OTP."""
+
+    email = serializers.EmailField()
+    otp = serializers.CharField(min_length=4, max_length=12)
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    """Serializer for resending an email verification OTP."""
+
+    email = serializers.EmailField()
+
+
+class DetailResponseSerializer(serializers.Serializer):
+    """Serializer for simple detail responses."""
+
+    detail = serializers.CharField()
 
 
 class LanguagePreferenceSerializer(serializers.Serializer):

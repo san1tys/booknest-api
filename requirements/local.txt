@@ -1,3 +1,4 @@
 -r prod.txt
 
 python-decouple==3.8
+pytest==9.0.1
