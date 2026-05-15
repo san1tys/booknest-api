@@ -59,6 +59,9 @@ BOOKNEST_ENV_ID=prod
 docker compose up --build
 ```
 
+When `BOOKNEST_ENV_ID=local`, only the web service runs and Django uses SQLite.
+When `BOOKNEST_ENV_ID=prod`, Docker activates the `prod` profile, starts
+PostgreSQL, runs migrations, and serves the app through Gunicorn.
 
 ### Redis settings
 ```env
