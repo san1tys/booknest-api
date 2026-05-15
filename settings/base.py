@@ -81,6 +81,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.abstract.middleware.RedisLanguagePreferenceMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -118,6 +119,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # ------------------------
 LANGUAGE_CODE = "en-us"
+LANGUAGES = (
+    ("en-us", "English"),
+    ("ru", "Russian"),
+    ("kk", "Kazakh"),
+)
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True

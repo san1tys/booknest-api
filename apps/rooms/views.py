@@ -17,6 +17,13 @@ from rest_framework.status import (
 from rest_framework.viewsets import ViewSet
 
 from apps.abstract.permissions import IsOwner
+from apps.abstract.redis_storage import (
+    build_cache_key,
+    cache_delete,
+    cache_delete_pattern,
+    cache_get,
+    cache_set,
+)
 from apps.abstract.serializers import (
     ErrorDetailSerializer,
     MessageSerializer,
@@ -77,6 +84,7 @@ class RoomViewSet(ViewSet):
             )
 
         room: Room = serializer.save()
+        cache_delete_pattern("rooms:list:*")
         return DRFResponse(RoomDetailSerializer(room).data, status=HTTP_201_CREATED)
 
     @extend_schema(
@@ -137,6 +145,8 @@ class RoomViewSet(ViewSet):
         )
         if serializer.is_valid():
             updated: Room = serializer.save()
+            cache_delete(build_cache_key("rooms:detail", updated.pk))
+            cache_delete_pattern("rooms:list:*")
             return DRFResponse(RoomDetailSerializer(updated).data, status=HTTP_200_OK)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -179,11 +189,18 @@ class RoomViewSet(ViewSet):
         returns:
             DRFResponse: The response containing the room details or error message if not found.
         """
+        cache_key = build_cache_key("rooms:detail", pk)
+        cached_data = cache_get(cache_key)
+        if cached_data is not None:
+            return DRFResponse(cached_data, status=HTTP_200_OK)
+
         try:
             room: Room = Room.objects.select_related("hotel").get(pk=pk)
         except Room.DoesNotExist:
             return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
-        return DRFResponse(RoomDetailSerializer(room).data, status=HTTP_200_OK)
+        data = RoomDetailSerializer(room).data
+        cache_set(cache_key, data)
+        return DRFResponse(data, status=HTTP_200_OK)
 
     @extend_schema(
         responses={HTTP_200_OK: RoomDetailSerializer(many=True)},
@@ -213,6 +230,11 @@ class RoomViewSet(ViewSet):
         returns:
             DRFResponse: The response containing a list of rooms matching the criteria.
         """
+        cache_key = build_cache_key("rooms:list", request.get_full_path())
+        cached_data = cache_get(cache_key)
+        if cached_data is not None:
+            return DRFResponse(cached_data, status=HTTP_200_OK)
+
         qs: QuerySet[Room] = Room.objects.select_related("hotel", "hotel__owner").all()
 
         hotel: int | None = request.query_params.get("hotel")
@@ -245,6 +267,7 @@ class RoomViewSet(ViewSet):
             qs = qs.order_by(ordering)
 
         data: list[dict] = RoomDetailSerializer(qs, many=True).data
+        cache_set(cache_key, data)
         return DRFResponse(data, status=HTTP_200_OK)
 
     @extend_schema(
@@ -298,7 +321,10 @@ class RoomViewSet(ViewSet):
         #         status=HTTP_403_FORBIDDEN,
         #     )
 
+        room_id = room.pk
         room.delete()
+        cache_delete(build_cache_key("rooms:detail", room_id))
+        cache_delete_pattern("rooms:list:*")
         return DRFResponse(
             {"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT
         )
