@@ -37,6 +37,31 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+## Docker
+
+Set `BOOKNEST_ENV_ID` in `.env` and the single `compose.yml` will switch
+behavior automatically.
+
+### Local setup (SQLite)
+```bash
+# in .env
+BOOKNEST_ENV_ID=local
+
+docker compose up --build
+```
+
+### Production-like setup (PostgreSQL)
+```bash
+# in .env
+BOOKNEST_ENV_ID=prod
+
+docker compose up --build
+```
+
+When `BOOKNEST_ENV_ID=local`, only the web service runs and Django uses SQLite.
+When `BOOKNEST_ENV_ID=prod`, Docker activates the `prod` profile, starts
+PostgreSQL, runs migrations, and serves the app through Gunicorn.
+
 ## API Documentation (Swagger)
 - Swagger UI: http://127.0.0.1:8000/api/docs/
 - OpenAPI schema: http://127.0.0.1:8000/api/schema/
