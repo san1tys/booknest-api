@@ -1,0 +1,396 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-15 21:01+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
+"%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: apps/bookings/models.py:13
+msgid "Pending"
+msgstr "В ожидании"
+
+#: apps/bookings/models.py:14
+msgid "Confirmed"
+msgstr "Подтверждено"
+
+#: apps/bookings/models.py:15
+msgid "Completed"
+msgstr "Завершено"
+
+#: apps/bookings/models.py:16
+msgid "Cancelled"
+msgstr "Отменено"
+
+#: apps/bookings/models.py:26 apps/reviews/models.py:13 apps/users/models.py:64
+msgid "User"
+msgstr "Пользователь"
+
+#: apps/bookings/models.py:27
+msgid "The user who made the booking."
+msgstr "Пользователь, который создал бронирование."
+
+#: apps/bookings/models.py:33 apps/rooms/models.py:44
+msgid "Room"
+msgstr "Комната"
+
+#: apps/bookings/models.py:34
+msgid "The room that is booked."
+msgstr "Комната, которая была забронирована."
+
+#: apps/bookings/models.py:37
+msgid "Check-in Date"
+msgstr "Дата заезда"
+
+#: apps/bookings/models.py:38
+msgid "The date when the booking starts."
+msgstr "Дата начала бронирования."
+
+#: apps/bookings/models.py:41
+msgid "Check-out Date"
+msgstr "Дата выезда"
+
+#: apps/bookings/models.py:42
+msgid "The date when the booking ends."
+msgstr "Дата окончания бронирования."
+
+#: apps/bookings/models.py:48
+msgid "Booking Status"
+msgstr "Статус бронирования"
+
+#: apps/bookings/models.py:50
+msgid ""
+"The current status of the booking (e.g., pending, confirmed, cancelled)."
+msgstr "Текущий статус бронирования (например, в ожидании, подтверждено, отменено)."
+
+#: apps/bookings/models.py:57
+msgid "Total Price"
+msgstr "Общая стоимость"
+
+#: apps/bookings/models.py:58
+msgid "The total price for the booking."
+msgstr "Общая стоимость бронирования."
+
+#: apps/bookings/models.py:64
+msgid "Booking"
+msgstr "Бронирование"
+
+#: apps/bookings/models.py:65
+msgid "Bookings"
+msgstr "Бронирования"
+
+#: apps/bookings/models.py:69 apps/bookings/serializers.py:28
+#: apps/bookings/serializers.py:99
+msgid "Check-out date must be after check-in date."
+msgstr "Дата выезда должна быть позже даты заезда."
+
+#: apps/bookings/views.py:268
+msgid "Booking not found."
+msgstr "Бронирование не найдено."
+
+#: apps/bookings/views.py:276
+msgid "You do not have permission to cancel this booking."
+msgstr "У вас нет прав на отмену этого бронирования."
+
+#: apps/bookings/views.py:282
+msgid "This booking is already cancelled."
+msgstr "Это бронирование уже отменено."
+
+#: apps/hotels/models.py:39
+msgid "A hotel with this name already exists. Please choose a different name."
+msgstr "Отель с таким названием уже существует. Пожалуйста, выберите другое название."
+
+#: apps/hotels/models.py:43
+msgid "Hotel Name"
+msgstr "Название отеля"
+
+#: apps/hotels/models.py:44
+msgid "Enter the name of the hotel."
+msgstr "Введите название отеля."
+
+#: apps/hotels/models.py:50
+msgid "Hotel Address"
+msgstr "Адрес отеля"
+
+#: apps/hotels/models.py:51
+msgid "Enter the address of the hotel."
+msgstr "Введите адрес отеля."
+
+#: apps/hotels/models.py:57
+msgid "Hotel City"
+msgstr "Город отеля"
+
+#: apps/hotels/models.py:58
+msgid "Enter the city where the hotel is located."
+msgstr "Введите город, в котором расположен отель."
+
+#: apps/hotels/models.py:63
+msgid "Hotel Rating"
+msgstr "Рейтинг отеля"
+
+#: apps/hotels/models.py:64
+msgid "Enter the rating of the hotel (1-5)."
+msgstr "Введите рейтинг отеля (1-5)."
+
+#: apps/hotels/models.py:69
+msgid "Hotel Description"
+msgstr "Описание отеля"
+
+#: apps/hotels/models.py:70
+msgid "Enter a description of the hotel."
+msgstr "Введите описание отеля."
+
+#: apps/hotels/models.py:79
+msgid "Hotel Owner"
+msgstr "Владелец отеля"
+
+#: apps/hotels/models.py:80
+msgid "Select the owner of the hotel."
+msgstr "Выберите владельца отеля."
+
+#: apps/hotels/models.py:86 apps/reviews/models.py:19 apps/rooms/models.py:17
+msgid "Hotel"
+msgstr "Отель"
+
+#: apps/hotels/models.py:87
+msgid "Hotels"
+msgstr "Отели"
+
+#: apps/hotels/models.py:92
+msgid "Rating must be between 1 and 5."
+msgstr "Рейтинг должен быть от 1 до 5."
+
+#: apps/hotels/views.py:142 apps/hotels/views.py:218 apps/hotels/views.py:308
+msgid "Hotel not found."
+msgstr "Отель не найден."
+
+#: apps/hotels/views.py:147
+msgid "You do not have permission to edit this hotel."
+msgstr "У вас нет прав на редактирование этого отеля."
+
+#: apps/hotels/views.py:313
+msgid "You do not have permission to delete this hotel."
+msgstr "У вас нет прав на удаление этого отеля."
+
+#: apps/hotels/views.py:322
+msgid "Hotel deleted successfully."
+msgstr "Отель успешно удалён."
+
+#: apps/reviews/models.py:23
+msgid "Rating"
+msgstr "Рейтинг"
+
+#: apps/reviews/models.py:25
+msgid "Review text"
+msgstr "Текст отзыва"
+
+#: apps/reviews/models.py:31
+msgid "Review"
+msgstr "Отзыв"
+
+#: apps/reviews/models.py:32
+msgid "Reviews"
+msgstr "Отзывы"
+
+#: apps/reviews/views.py:125
+msgid "Authentication credentials were not provided."
+msgstr "Учетные данные для аутентификации не были предоставлены."
+
+#: apps/reviews/views.py:132
+msgid "You can review this hotel only after a confirmed/completed booking."
+msgstr "Вы можете оставить отзыв об этом отеле только после подтвержденного или завершенного бронирования."
+
+#: apps/reviews/views.py:139
+msgid "You already reviewed this hotel."
+msgstr "Вы уже оставили отзыв об этом отеле."
+
+#: apps/rooms/models.py:18
+msgid "Parent hotel."
+msgstr "Родительский отель."
+
+#: apps/rooms/models.py:22
+msgid "Room title"
+msgstr "Название комнаты"
+
+#: apps/rooms/models.py:23
+msgid "e.g. \"Deluxe Room\""
+msgstr "например, \"Делюкс\""
+
+#: apps/rooms/models.py:28
+msgid "Price per night"
+msgstr "Цена за ночь"
+
+#: apps/rooms/models.py:29
+msgid "Decimal price per night."
+msgstr "Стоимость за ночь в десятичном формате."
+
+#: apps/rooms/models.py:32
+msgid "Capacity"
+msgstr "Вместимость"
+
+#: apps/rooms/models.py:33
+msgid "Guests count this room type can host."
+msgstr "Количество гостей, которое может разместить этот тип комнаты."
+
+#: apps/rooms/models.py:37
+msgid "Quantity"
+msgstr "Количество"
+
+#: apps/rooms/models.py:38
+msgid "How many identical rooms of this type exist."
+msgstr "Сколько одинаковых комнат этого типа существует."
+
+#: apps/rooms/models.py:45
+msgid "Rooms"
+msgstr "Комнаты"
+
+#: apps/rooms/models.py:49
+msgid "Price per night must be positive."
+msgstr "Цена за ночь должна быть положительной."
+
+#: apps/rooms/models.py:51
+msgid "Capacity must be greater than 0."
+msgstr "Вместимость должна быть больше 0."
+
+#: apps/rooms/models.py:53
+msgid "Quantity must be greater than 0."
+msgstr "Количество должно быть больше 0."
+
+#: apps/rooms/serializers.py:24
+msgid "Must be positive."
+msgstr "Должно быть положительным."
+
+#: apps/rooms/serializers.py:26 apps/rooms/serializers.py:28
+msgid "Must be greater than 0."
+msgstr "Должно быть больше 0."
+
+#: apps/rooms/views.py:87
+msgid "Only the hotel owner can create rooms."
+msgstr "Только владелец отеля может создавать комнаты."
+
+#: apps/rooms/views.py:141
+msgid "Room not found."
+msgstr "Комната не найдена."
+
+#: apps/rooms/views.py:145
+msgid "You do not have permission to edit this room."
+msgstr "У вас нет прав на редактирование этой комнаты."
+
+#: apps/rooms/views.py:207 apps/rooms/views.py:327 apps/rooms/views.py:340
+msgid "Room deleted successfully."
+msgstr "Комната успешно удалена."
+
+#: apps/users/models.py:21
+msgid "Email is required."
+msgstr "Email обязателен."
+
+#: apps/users/models.py:44
+msgid "Email"
+msgstr "Email"
+
+#: apps/users/models.py:48
+msgid "First name"
+msgstr "Имя"
+
+#: apps/users/models.py:53
+msgid "Last name"
+msgstr "Фамилия"
+
+#: apps/users/models.py:57
+msgid "Email verified"
+msgstr "Email подтвержден"
+
+#: apps/users/models.py:60
+msgid "Active"
+msgstr "Активен"
+
+#: apps/users/models.py:61
+msgid "Staff status"
+msgstr "Статус персонала"
+
+#: apps/users/models.py:65
+msgid "Users"
+msgstr "Пользователи"
+
+#: apps/users/views.py:135 apps/users/views.py:300
+msgid "You are already authenticated."
+msgstr "Вы уже аутентифицированы."
+
+#: apps/users/views.py:143
+msgid "Account exists but email is not verified. A new OTP was sent."
+msgstr "Аккаунт существует, но email не подтвержден. Новый OTP был отправлен."
+
+#: apps/users/views.py:152
+msgid "Registration successful. Verify your email with the OTP that was sent."
+msgstr "Регистрация прошла успешно. Подтвердите ваш email с помощью отправленного OTP."
+
+#: apps/users/views.py:189 apps/users/views.py:245
+msgid "User with this email was not found."
+msgstr "Пользователь с таким email не найден."
+
+#: apps/users/views.py:194 apps/users/views.py:250
+msgid "Email is already verified."
+msgstr "Email уже подтвержден."
+
+#: apps/users/views.py:201
+msgid "Invalid or expired verification code."
+msgstr "Неверный или истекший код подтверждения."
+
+#: apps/users/views.py:209
+msgid "Email verified successfully."
+msgstr "Email успешно подтвержден."
+
+#: apps/users/views.py:256
+msgid "A new verification OTP was sent to your email."
+msgstr "Новый OTP для подтверждения был отправлен на ваш email."
+
+#: apps/users/views.py:314
+msgid "Invalid email or password."
+msgstr "Неверный email или пароль."
+
+#: apps/users/views.py:319
+msgid "User account is disabled."
+msgstr "Учетная запись пользователя отключена."
+
+#: apps/users/views.py:324
+msgid "Email is not verified."
+msgstr "Email не подтвержден."
+
+#: settings/base.py:119
+msgid "English"
+msgstr "Английский"
+
+#: settings/base.py:120
+msgid "Russian"
+msgstr "Русский"
+
+#: settings/base.py:121
+msgid "Kazakh"
+msgstr "Казахский"
+
+#: templates/admin/index.html:11
+msgid "Weeks"
+msgstr "Недели"
+
+#: templates/admin/index.html:18
+msgid "Apply"
+msgstr "Применить"
+
+#: templates/admin/index.html:30
+#, python-format
+msgid "Last %(weeks)s weeks"
+msgstr "Последние %(weeks)s недель"

@@ -1,0 +1,394 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-15 21:01+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: apps/bookings/models.py:13
+msgid "Pending"
+msgstr "Күтуде"
+
+#: apps/bookings/models.py:14
+msgid "Confirmed"
+msgstr "Расталды"
+
+#: apps/bookings/models.py:15
+msgid "Completed"
+msgstr "Аяқталды"
+
+#: apps/bookings/models.py:16
+msgid "Cancelled"
+msgstr "Бас тартылды"
+
+#: apps/bookings/models.py:26 apps/reviews/models.py:13 apps/users/models.py:64
+msgid "User"
+msgstr "Пайдаланушы"
+
+#: apps/bookings/models.py:27
+msgid "The user who made the booking."
+msgstr "Бронь жасаған пайдаланушы."
+
+#: apps/bookings/models.py:33 apps/rooms/models.py:44
+msgid "Room"
+msgstr "Бөлме"
+
+#: apps/bookings/models.py:34
+msgid "The room that is booked."
+msgstr "Бронь жасалған бөлме."
+
+#: apps/bookings/models.py:37
+msgid "Check-in Date"
+msgstr "Кіру күні"
+
+#: apps/bookings/models.py:38
+msgid "The date when the booking starts."
+msgstr "Бронь басталатын күн."
+
+#: apps/bookings/models.py:41
+msgid "Check-out Date"
+msgstr "Шығу күні"
+
+#: apps/bookings/models.py:42
+msgid "The date when the booking ends."
+msgstr "Бронь аяқталатын күн."
+
+#: apps/bookings/models.py:48
+msgid "Booking Status"
+msgstr "Бронь күйі"
+
+#: apps/bookings/models.py:50
+msgid ""
+"The current status of the booking (e.g., pending, confirmed, cancelled)."
+msgstr "Броньның ағымдағы күйі (мысалы, күтуде, расталды, бас тартылды)."
+
+#: apps/bookings/models.py:57
+msgid "Total Price"
+msgstr "Жалпы баға"
+
+#: apps/bookings/models.py:58
+msgid "The total price for the booking."
+msgstr "Броньның жалпы бағасы."
+
+#: apps/bookings/models.py:64
+msgid "Booking"
+msgstr "Бронь"
+
+#: apps/bookings/models.py:65
+msgid "Bookings"
+msgstr "Броньдар"
+
+#: apps/bookings/models.py:69 apps/bookings/serializers.py:28
+#: apps/bookings/serializers.py:99
+msgid "Check-out date must be after check-in date."
+msgstr "Шығу күні кіру күнінен кейін болуы керек."
+
+#: apps/bookings/views.py:268
+msgid "Booking not found."
+msgstr "Бронь табылмады."
+
+#: apps/bookings/views.py:276
+msgid "You do not have permission to cancel this booking."
+msgstr "Сізде бұл броньды жоюға рұқсат жоқ."
+
+#: apps/bookings/views.py:282
+msgid "This booking is already cancelled."
+msgstr "Бұл бронь әлдеқашан жойылған."
+
+#: apps/hotels/models.py:39
+msgid "A hotel with this name already exists. Please choose a different name."
+msgstr "Мұндай атаумен қонақүй бұрыннан бар. Басқа атау таңдаңыз."
+
+#: apps/hotels/models.py:43
+msgid "Hotel Name"
+msgstr "Қонақүй атауы"
+
+#: apps/hotels/models.py:44
+msgid "Enter the name of the hotel."
+msgstr "Қонақүйдің атауын енгізіңіз."
+
+#: apps/hotels/models.py:50
+msgid "Hotel Address"
+msgstr "Қонақүй мекенжайы"
+
+#: apps/hotels/models.py:51
+msgid "Enter the address of the hotel."
+msgstr "Қонақүйдің мекенжайын енгізіңіз."
+
+#: apps/hotels/models.py:57
+msgid "Hotel City"
+msgstr "Қонақүй қаласы"
+
+#: apps/hotels/models.py:58
+msgid "Enter the city where the hotel is located."
+msgstr "Қонақүй орналасқан қаланы енгізіңіз."
+
+#: apps/hotels/models.py:63
+msgid "Hotel Rating"
+msgstr "Қонақүй рейтингі"
+
+#: apps/hotels/models.py:64
+msgid "Enter the rating of the hotel (1-5)."
+msgstr "Қонақүй рейтингін енгізіңіз (1-5)."
+
+#: apps/hotels/models.py:69
+msgid "Hotel Description"
+msgstr "Қонақүй сипаттамасы"
+
+#: apps/hotels/models.py:70
+msgid "Enter a description of the hotel."
+msgstr "Қонақүйдің сипаттамасын енгізіңіз."
+
+#: apps/hotels/models.py:79
+msgid "Hotel Owner"
+msgstr "Қонақүй иесі"
+
+#: apps/hotels/models.py:80
+msgid "Select the owner of the hotel."
+msgstr "Қонақүй иесін таңдаңыз."
+
+#: apps/hotels/models.py:86 apps/reviews/models.py:19 apps/rooms/models.py:17
+msgid "Hotel"
+msgstr "Қонақүй"
+
+#: apps/hotels/models.py:87
+msgid "Hotels"
+msgstr "Қонақүйлер"
+
+#: apps/hotels/models.py:92
+msgid "Rating must be between 1 and 5."
+msgstr "Рейтинг 1 мен 5 аралығында болуы керек."
+
+#: apps/hotels/views.py:142 apps/hotels/views.py:218 apps/hotels/views.py:308
+msgid "Hotel not found."
+msgstr "Қонақүй табылмады."
+
+#: apps/hotels/views.py:147
+msgid "You do not have permission to edit this hotel."
+msgstr "Сізде бұл қонақүйді өңдеуге рұқсат жоқ."
+
+#: apps/hotels/views.py:313
+msgid "You do not have permission to delete this hotel."
+msgstr "Сізде бұл қонақүйді жоюға рұқсат жоқ."
+
+#: apps/hotels/views.py:322
+msgid "Hotel deleted successfully."
+msgstr "Қонақүй сәтті жойылды."
+
+#: apps/reviews/models.py:23
+msgid "Rating"
+msgstr "Рейтинг"
+
+#: apps/reviews/models.py:25
+msgid "Review text"
+msgstr "Пікір мәтіні"
+
+#: apps/reviews/models.py:31
+msgid "Review"
+msgstr "Пікір"
+
+#: apps/reviews/models.py:32
+msgid "Reviews"
+msgstr "Пікірлер"
+
+#: apps/reviews/views.py:125
+msgid "Authentication credentials were not provided."
+msgstr "Аутентификация деректері ұсынылмады."
+
+#: apps/reviews/views.py:132
+msgid "You can review this hotel only after a confirmed/completed booking."
+msgstr "Сіз бұл қонақүйге тек расталған немесе аяқталған броньдан кейін ғана пікір қалдыра аласыз."
+
+#: apps/reviews/views.py:139
+msgid "You already reviewed this hotel."
+msgstr "Сіз бұл қонақүйге пікір қалдырып қойғансыз."
+
+#: apps/rooms/models.py:18
+msgid "Parent hotel."
+msgstr "Негізгі қонақүй."
+
+#: apps/rooms/models.py:22
+msgid "Room title"
+msgstr "Бөлме атауы"
+
+#: apps/rooms/models.py:23
+msgid "e.g. \"Deluxe Room\""
+msgstr "мысалы, \"Deluxe Room\""
+
+#: apps/rooms/models.py:28
+msgid "Price per night"
+msgstr "Бір түннің бағасы"
+
+#: apps/rooms/models.py:29
+msgid "Decimal price per night."
+msgstr "Бір түннің ондық форматтағы бағасы."
+
+#: apps/rooms/models.py:32
+msgid "Capacity"
+msgstr "Сыйымдылық"
+
+#: apps/rooms/models.py:33
+msgid "Guests count this room type can host."
+msgstr "Бұл бөлме түрі қабылдай алатын қонақтар саны."
+
+#: apps/rooms/models.py:37
+msgid "Quantity"
+msgstr "Саны"
+
+#: apps/rooms/models.py:38
+msgid "How many identical rooms of this type exist."
+msgstr "Осы түрдегі бірдей бөлмелер саны."
+
+#: apps/rooms/models.py:45
+msgid "Rooms"
+msgstr "Бөлмелер"
+
+#: apps/rooms/models.py:49
+msgid "Price per night must be positive."
+msgstr "Бір түннің бағасы оң сан болуы керек."
+
+#: apps/rooms/models.py:51
+msgid "Capacity must be greater than 0."
+msgstr "Сыйымдылық 0-ден үлкен болуы керек."
+
+#: apps/rooms/models.py:53
+msgid "Quantity must be greater than 0."
+msgstr "Саны 0-ден үлкен болуы керек."
+
+#: apps/rooms/serializers.py:24
+msgid "Must be positive."
+msgstr "Оң сан болуы керек."
+
+#: apps/rooms/serializers.py:26 apps/rooms/serializers.py:28
+msgid "Must be greater than 0."
+msgstr "0-ден үлкен болуы керек."
+
+#: apps/rooms/views.py:87
+msgid "Only the hotel owner can create rooms."
+msgstr "Бөлмелерді тек қонақүй иесі ғана жасай алады."
+
+#: apps/rooms/views.py:141
+msgid "Room not found."
+msgstr "Бөлме табылмады."
+
+#: apps/rooms/views.py:145
+msgid "You do not have permission to edit this room."
+msgstr "Сізде бұл бөлмені өңдеуге рұқсат жоқ."
+
+#: apps/rooms/views.py:207 apps/rooms/views.py:327 apps/rooms/views.py:340
+msgid "Room deleted successfully."
+msgstr "Бөлме сәтті жойылды."
+
+#: apps/users/models.py:21
+msgid "Email is required."
+msgstr "Email міндетті."
+
+#: apps/users/models.py:44
+msgid "Email"
+msgstr "Email"
+
+#: apps/users/models.py:48
+msgid "First name"
+msgstr "Аты"
+
+#: apps/users/models.py:53
+msgid "Last name"
+msgstr "Тегі"
+
+#: apps/users/models.py:57
+msgid "Email verified"
+msgstr "Email расталған"
+
+#: apps/users/models.py:60
+msgid "Active"
+msgstr "Белсенді"
+
+#: apps/users/models.py:61
+msgid "Staff status"
+msgstr "Қызметкер мәртебесі"
+
+#: apps/users/models.py:65
+msgid "Users"
+msgstr "Пайдаланушылар"
+
+#: apps/users/views.py:135 apps/users/views.py:300
+msgid "You are already authenticated."
+msgstr "Сіз әлдеқашан аутентификациядан өткенсіз."
+
+#: apps/users/views.py:143
+msgid "Account exists but email is not verified. A new OTP was sent."
+msgstr "Аккаунт бар, бірақ email расталмаған. Жаңа OTP жіберілді."
+
+#: apps/users/views.py:152
+msgid "Registration successful. Verify your email with the OTP that was sent."
+msgstr "Тіркелу сәтті аяқталды. Жіберілген OTP арқылы email-іңізді растаңыз."
+
+#: apps/users/views.py:189 apps/users/views.py:245
+msgid "User with this email was not found."
+msgstr "Мұндай email бар пайдаланушы табылмады."
+
+#: apps/users/views.py:194 apps/users/views.py:250
+msgid "Email is already verified."
+msgstr "Email әлдеқашан расталған."
+
+#: apps/users/views.py:201
+msgid "Invalid or expired verification code."
+msgstr "Растау коды жарамсыз немесе мерзімі өтіп кеткен."
+
+#: apps/users/views.py:209
+msgid "Email verified successfully."
+msgstr "Email сәтті расталды."
+
+#: apps/users/views.py:256
+msgid "A new verification OTP was sent to your email."
+msgstr "Email-іңізге жаңа растау OTP жіберілді."
+
+#: apps/users/views.py:314
+msgid "Invalid email or password."
+msgstr "Email немесе құпиясөз қате."
+
+#: apps/users/views.py:319
+msgid "User account is disabled."
+msgstr "Пайдаланушы аккаунты өшірілген."
+
+#: apps/users/views.py:324
+msgid "Email is not verified."
+msgstr "Email расталмаған."
+
+#: settings/base.py:119
+msgid "English"
+msgstr "Ағылшын"
+
+#: settings/base.py:120
+msgid "Russian"
+msgstr "Орыс"
+
+#: settings/base.py:121
+msgid "Kazakh"
+msgstr "Қазақ"
+
+#: templates/admin/index.html:11
+msgid "Weeks"
+msgstr "Апталар"
+
+#: templates/admin/index.html:18
+msgid "Apply"
+msgstr "Қолдану"
+
+#: templates/admin/index.html:30
+#, python-format
+msgid "Last %(weeks)s weeks"
+msgstr "Соңғы %(weeks)s апта"

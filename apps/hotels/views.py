@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
+from django.utils.translation import gettext_lazy as _
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
@@ -138,12 +139,12 @@ class HotelViewSet(ViewSet):
             hotel: Hotel = Hotel.objects.get(pk=pk)
         except Hotel.DoesNotExist:
             return DRFResponse(
-                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
             )
 
         if hotel.owner != request.user:
             return DRFResponse(
-                {"detail": "You do not have permission to edit this hotel."},
+                {"detail": _("You do not have permission to edit this hotel.")},
                 status=HTTP_403_FORBIDDEN,
             )
 
@@ -214,7 +215,7 @@ class HotelViewSet(ViewSet):
             return DRFResponse(data, status=HTTP_200_OK)
         except Hotel.DoesNotExist:
             return DRFResponse(
-                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
             )
 
     @extend_schema(
@@ -304,12 +305,12 @@ class HotelViewSet(ViewSet):
             hotel: Hotel = Hotel.objects.get(pk=pk)
         except Hotel.DoesNotExist:
             return DRFResponse(
-                {"detail": "Hotel not found."}, status=HTTP_404_NOT_FOUND
+                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
             )
 
         if hotel.owner != request.user:
             return DRFResponse(
-                {"detail": "You do not have permission to delete this hotel."},
+                {"detail": _("You do not have permission to delete this hotel.")},
                 status=HTTP_403_FORBIDDEN,
             )
 
@@ -318,5 +319,6 @@ class HotelViewSet(ViewSet):
         cache_delete(build_cache_key("hotels:detail", hotel_id))
         cache_delete_pattern("hotels:list:*")
         return DRFResponse(
-            {"detail": "Hotel deleted successfully."}, status=HTTP_204_NO_CONTENT
+            {"detail": _("Hotel deleted successfully.")},
+            status=HTTP_204_NO_CONTENT,
         )

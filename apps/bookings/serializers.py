@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import Q
 from rest_framework import serializers
+from django.utils.translation import gettext_lazy as _
 
 from apps.bookings.models import Booking, BookingStatus
 
@@ -24,7 +25,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
         if check_out <= check_in:
             raise serializers.ValidationError(
-                {"check_out": "Check-out date must be after check-in date."}
+                {"check_out": _("Check-out date must be after check-in date.")}
             )
 
         overlapping_bookings = Booking.objects.filter(
@@ -95,7 +96,7 @@ class AvailabilityQuerySerializer(serializers.Serializer):
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if attrs["check_out"] <= attrs["check_in"]:
             raise serializers.ValidationError(
-                {"check_out": "Check-out date must be after check-in date."}
+                {"check_out": _("Check-out date must be after check-in date.")}
             )
         return attrs
 

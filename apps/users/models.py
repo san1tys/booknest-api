@@ -6,7 +6,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
-
+from django.utils.translation import gettext_lazy as _
 from apps.abstract.models import AbstractBaseModel, AbstractSoftDeleteModel
 
 
@@ -18,7 +18,7 @@ class UserManager(BaseUserManager):
     ) -> "User":
         """Create and save a user with the given email and password."""
         if not email:
-            raise ValueError("Email is required")
+            raise ValueError(_("Email is required."))
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -39,17 +39,30 @@ class UserManager(BaseUserManager):
 class User(
     AbstractBaseUser, PermissionsMixin, AbstractBaseModel, AbstractSoftDeleteModel
 ):
-    """Custom user model using email as the unique identifier, with additional fields for first name, last name, and account status."""
-
     NAME_LENGTH = 100
 
-    email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=NAME_LENGTH, blank=True)
-    last_name = models.CharField(max_length=NAME_LENGTH, blank=True)
-    is_email_verified = models.BooleanField(default=False)
+    email = models.EmailField(unique=True, verbose_name=_("Email"))
+    first_name = models.CharField(
+        max_length=NAME_LENGTH,
+        blank=True,
+        verbose_name=_("First name"),
+    )
+    last_name = models.CharField(
+        max_length=NAME_LENGTH,
+        blank=True,
+        verbose_name=_("Last name"),
+    )
+    is_email_verified = models.BooleanField(
+        default=False,
+        verbose_name=_("Email verified"),
+    )
 
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+    is_staff = models.BooleanField(default=False, verbose_name=_("Staff status"))
+
+    class Meta:
+        verbose_name = _("User")
+        verbose_name_plural = _("Users")
 
     # created_at = models.DateTimeField(auto_now_add=True)
 

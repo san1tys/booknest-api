@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from drf_spectacular.utils import extend_schema
+from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -121,21 +122,21 @@ class HotelReviewViewSet(ViewSet):
         """
         if not IsAuthenticated().has_permission(request, self):
             return DRFResponse(
-                {"detail": "Authentication credentials were not provided."},
+                {"detail": _("Authentication credentials were not provided.")},
                 status=HTTP_401_UNAUTHORIZED,
             )
 
         if not _has_valid_booking_for_hotel(request.user, int(hotel_id)):
             return DRFResponse(
                 {
-                    "detail": "You can review this hotel only after a confirmed/completed booking."
+                    "detail": _("You can review this hotel only after a confirmed/completed booking.")
                 },
                 status=HTTP_400_BAD_REQUEST,
             )
 
         if Review.objects.filter(user=request.user, hotel_id=hotel_id).exists():
             return DRFResponse(
-                {"detail": "You already reviewed this hotel."},
+                {"detail": _("You already reviewed this hotel.")},
                 status=HTTP_400_BAD_REQUEST,
             )
 

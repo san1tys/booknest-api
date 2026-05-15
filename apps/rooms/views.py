@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from django.utils.translation import gettext_lazy as _
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
@@ -83,7 +84,7 @@ class RoomViewSet(ViewSet):
         hotel: Hotel = serializer.validated_data["hotel"]
         if not hotel.owner_id or hotel.owner_id != request.user.id:
             return DRFResponse(
-                {"detail": "Only the hotel owner can create rooms."},
+                {"detail": _("Only the hotel owner can create rooms.")},
                 status=HTTP_403_FORBIDDEN,
             )
 
@@ -137,11 +138,11 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse({"detail": _("Room not found.")}, status=HTTP_404_NOT_FOUND)
 
         if room.hotel.owner_id != request.user.id:
             return DRFResponse(
-                {"detail": "You do not have permission to edit this room."},
+                {"detail": _("You do not have permission to edit this room.")},
                 status=HTTP_403_FORBIDDEN,
             )
 
@@ -203,7 +204,7 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse({"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND)
         data = RoomDetailSerializer(room).data
         cache_set(cache_key, data)
         return DRFResponse(data, status=HTTP_200_OK)
@@ -323,7 +324,7 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": "Room not found."}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse({"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND)
 
         # if room.hotel.owner_id != request.user.id:
         #     return DRFResponse(
@@ -336,5 +337,5 @@ class RoomViewSet(ViewSet):
         cache_delete(build_cache_key("rooms:detail", room_id))
         cache_delete_pattern("rooms:list:*")
         return DRFResponse(
-            {"detail": "Room deleted successfully."}, status=HTTP_204_NO_CONTENT
+            {"detail": _("Room deleted successfully.")}, status=HTTP_204_NO_CONTENT
         )

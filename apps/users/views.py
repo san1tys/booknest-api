@@ -2,6 +2,7 @@ from typing import Any
 
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -131,7 +132,7 @@ class UserViewSet(ViewSet):
         """
         if request.user.is_authenticated:
             return DRFResponse(
-                {"detail": "You are already authenticated."},
+                {"detail": _("You are already authenticated.")},
                 status=HTTP_401_UNAUTHORIZED,
             )
         email = str(request.data.get("email", "")).strip()
@@ -139,7 +140,7 @@ class UserViewSet(ViewSet):
         if existing_user is not None and not existing_user.is_email_verified:
             dispatch_email_verification_otp(existing_user)
             return DRFResponse(
-                {"detail": "Account exists but email is not verified. A new OTP was sent."},
+                {"detail": _("Account exists but email is not verified. A new OTP was sent.")},
                 status=HTTP_200_OK,
             )
 
@@ -148,7 +149,7 @@ class UserViewSet(ViewSet):
             user: User = serializer.save()
             dispatch_email_verification_otp(user)
             response_data = {
-                "detail": "Registration successful. Verify your email with the OTP that was sent.",
+                "detail": _("Registration successful. Verify your email with the OTP that was sent."),
                 "user": UserSerializer(user).data,
             }
             return DRFResponse(response_data, status=HTTP_201_CREATED)
@@ -185,19 +186,19 @@ class UserViewSet(ViewSet):
             ).first()
             if user is None:
                 return DRFResponse(
-                    {"detail": "User with this email was not found."},
+                    {"detail": _("User with this email was not found.")},
                     status=HTTP_404_NOT_FOUND,
                 )
             if user.is_email_verified:
                 return DRFResponse(
-                    {"detail": "Email is already verified."},
+                    {"detail": _("Email is already verified.")},
                     status=HTTP_200_OK,
                 )
 
             otp = get_email_verification_otp(user.email)
             if otp != serializer.validated_data["otp"]:
                 return DRFResponse(
-                    {"detail": "Invalid or expired verification code."},
+                    {"detail": _("Invalid or expired verification code.")},
                     status=HTTP_400_BAD_REQUEST,
                 )
 
@@ -205,7 +206,7 @@ class UserViewSet(ViewSet):
             user.save(update_fields=["is_email_verified"])
             delete_email_verification_otp(user.email)
             return DRFResponse(
-                {"detail": "Email verified successfully."},
+                {"detail": _("Email verified successfully.")},
                 status=HTTP_200_OK,
             )
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -241,18 +242,18 @@ class UserViewSet(ViewSet):
             ).first()
             if user is None:
                 return DRFResponse(
-                    {"detail": "User with this email was not found."},
+                    {"detail": _("User with this email was not found.")},
                     status=HTTP_404_NOT_FOUND,
                 )
             if user.is_email_verified:
                 return DRFResponse(
-                    {"detail": "Email is already verified."},
+                    {"detail": _("Email is already verified.")},
                     status=HTTP_400_BAD_REQUEST,
                 )
 
             dispatch_email_verification_otp(user)
             return DRFResponse(
-                {"detail": "A new verification OTP was sent to your email."},
+                {"detail": _("A new verification OTP was sent to your email.")},
                 status=HTTP_200_OK,
             )
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -296,7 +297,7 @@ class UserViewSet(ViewSet):
 
         if request.user.is_authenticated:
             return DRFResponse(
-                {"detail": "You are already authenticated."},
+                {"detail": _("You are already authenticated.")},
                 status=HTTP_405_METHOD_NOT_ALLOWED,
             )
 
@@ -310,17 +311,17 @@ class UserViewSet(ViewSet):
                 serializer.validated_data["password"]
             ):
                 return DRFResponse(
-                    {"detail": "Invalid email or password."},
+                    {"detail": _("Invalid email or password.")},
                     status=HTTP_401_UNAUTHORIZED,
                 )
             if not user.is_active:
                 return DRFResponse(
-                    {"detail": "User account is disabled."},
+                    {"detail": _("User account is disabled.")},
                     status=HTTP_401_UNAUTHORIZED,
                 )
             if not user.is_email_verified:
                 return DRFResponse(
-                    {"detail": "Email is not verified."},
+                    {"detail": _("Email is not verified.")},
                     status=HTTP_401_UNAUTHORIZED,
                 )
 

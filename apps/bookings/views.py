@@ -4,6 +4,7 @@ from typing import Any
 from django.db.models import Q, QuerySet
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
+from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -264,7 +265,7 @@ class BookingViewSet(ViewSet):
             ).get(pk=pk)
         except Booking.DoesNotExist:
             return DRFResponse(
-                {"detail": "Booking not found"}, status=HTTP_404_NOT_FOUND
+                {"detail": _("Booking not found.")}, status=HTTP_404_NOT_FOUND
             )
 
         is_booking_owner: bool = booking.user == request.user
@@ -272,13 +273,13 @@ class BookingViewSet(ViewSet):
 
         if not (is_booking_owner or is_hotel_owner):
             return DRFResponse(
-                {"detail": "You do not have permission to cancel this booking."},
+                {"detail": _("You do not have permission to cancel this booking.")},
                 status=HTTP_403_FORBIDDEN,
             )
 
         if booking.status == BookingStatus.CANCELLED:
             return DRFResponse(
-                {"detail": "This booking is already cancelled."},
+                {"detail": _("This booking is already cancelled.")},
                 status=HTTP_400_BAD_REQUEST,
             )
 
