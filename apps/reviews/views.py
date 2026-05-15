@@ -10,9 +10,17 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.redis_storage import (
+    build_cache_key,
+    cache_delete_pattern,
+    cache_get,
+    cache_set,
+)
+from apps.abstract.serializers import ErrorDetailSerializer
 from apps.bookings.models import Booking, BookingStatus
 from apps.reviews.models import Review
 from apps.reviews.serializers import ReviewCreateSerializer, ReviewListSerializer
@@ -51,7 +59,10 @@ class HotelReviewViewSet(ViewSet):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        responses={HTTP_200_OK: ReviewListSerializer(many=True)},
+        responses={
+            HTTP_200_OK: ReviewListSerializer(many=True),
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
+        },
         summary="List hotel reviews",
         description="Return all reviews for a specific hotel.",
     )
@@ -67,10 +78,16 @@ class HotelReviewViewSet(ViewSet):
         Returns:
             DRFResponse: The HTTP response containing the list of reviews or error information.
         """
+        cache_key = build_cache_key("reviews:hotel:list", hotel_id)
+        cached_data = cache_get(cache_key)
+        if cached_data is not None:
+            return DRFResponse(cached_data, status=HTTP_200_OK)
+
         queryset: QuerySet[Review] = Review.objects.select_related(
             "user", "hotel"
         ).filter(hotel_id=hotel_id)
         serializer: ReviewListSerializer = ReviewListSerializer(queryset, many=True)
+        cache_set(cache_key, serializer.data)
         return DRFResponse(serializer.data, status=HTTP_200_OK)
 
     @extend_schema(
@@ -78,7 +95,8 @@ class HotelReviewViewSet(ViewSet):
         responses={
             HTTP_201_CREATED: ReviewListSerializer,
             HTTP_400_BAD_REQUEST: dict,
-            HTTP_401_UNAUTHORIZED: dict,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         summary="Create hotel review",
         description=(
@@ -129,5 +147,6 @@ class HotelReviewViewSet(ViewSet):
             hotel_id=hotel_id,
             **serializer.validated_data,
         )
+        cache_delete_pattern("reviews:hotel:list:*")
 
         return DRFResponse(ReviewListSerializer(review).data, status=HTTP_201_CREATED)

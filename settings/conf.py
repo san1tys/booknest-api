@@ -1,5 +1,6 @@
 # Project modules
 from datetime import timedelta
+from urllib.parse import quote
 
 from decouple import config
 
@@ -12,6 +13,55 @@ ENV_POSSIBLE_OPTIONS = (
 )
 ENV_ID = config("BOOKNEST_ENV_ID", default="local", cast=str)
 SECRET_KEY = config("SECRET_KEY", cast=str)
+
+# ----------------------------------------------
+# Redis | Cache | Temporary Data
+#
+REDIS_HOST = config("REDIS_HOST", default="localhost", cast=str)
+REDIS_PORT = config("REDIS_PORT", default=6379, cast=int)
+REDIS_DB = config("REDIS_DB", default=0, cast=int)
+REDIS_PASSWORD = config("REDIS_PASSWORD", default="", cast=str)
+REDIS_TIMEOUT_SECONDS = config("REDIS_TIMEOUT_SECONDS", default=2, cast=int)
+REDIS_KEY_PREFIX = config("REDIS_KEY_PREFIX", default="booknest", cast=str)
+
+_REDIS_AUTH = f":{quote(REDIS_PASSWORD, safe='')}@" if REDIS_PASSWORD else ""
+REDIS_URL = config(
+    "REDIS_URL",
+    default=f"redis://{_REDIS_AUTH}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+    cast=str,
+)
+
+CACHE_TTL_SECONDS = config("CACHE_TTL_SECONDS", default=300, cast=int)
+TEMP_DATA_TTL_SECONDS = config("TEMP_DATA_TTL_SECONDS", default=300, cast=int)
+LANGUAGE_PREFERENCE_TTL_SECONDS = config(
+    "LANGUAGE_PREFERENCE_TTL_SECONDS", default=60 * 60 * 24 * 30, cast=int
+)
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": REDIS_KEY_PREFIX,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "socket_connect_timeout": REDIS_TIMEOUT_SECONDS,
+                "socket_timeout": REDIS_TIMEOUT_SECONDS,
+            },
+            "IGNORE_EXCEPTIONS": True,
+        },
+    }
+}
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
+
+# Celery is not installed in this project yet, but these settings make Redis the
+# broker/result backend as soon as a Celery app is added.
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL, cast=str)
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL, cast=str)
+
+RATE_LIMIT_ANON = config("RATE_LIMIT_ANON", default="100/hour", cast=str)
+RATE_LIMIT_USER = config("RATE_LIMIT_USER", default="1000/hour", cast=str)
+RATE_LIMIT_AUTH = config("RATE_LIMIT_AUTH", default="10/minute", cast=str)
 
 # ----------------------------------------------
 # Django REST Framework
@@ -28,6 +78,15 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "apps.abstract.throttles.RedisAnonRateThrottle",
+        "apps.abstract.throttles.RedisUserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": RATE_LIMIT_ANON,
+        "user": RATE_LIMIT_USER,
+        "auth": RATE_LIMIT_AUTH,
+    },
 }
 
 # ----------------------------------------------

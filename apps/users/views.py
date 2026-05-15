@@ -10,17 +10,25 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_405_METHOD_NOT_ALLOWED,
 )
 from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.abstract.redis_storage import (
+    request_cache_identifier,
+    set_language_preference,
+    set_temporary_data,
+)
 from apps.abstract.serializers import (
     ErrorDetailSerializer,
     ValidationErrorSerializer,
 )
+from apps.abstract.throttles import RedisScopedRateThrottle
 from apps.users.models import User
 from apps.users.serializers import (
+    LanguagePreferenceSerializer,
     UserLoginSerializer,
     UserLoginSuccessSerializer,
     UserRegisterSerializer,
@@ -32,6 +40,7 @@ class UserViewSet(ViewSet):
     """ViewSet for user-related actions like registration, login, and retrieving user details."""
 
     permission_classes = [AllowAny]
+    throttle_scope = None
 
     # Get user
     @extend_schema(
@@ -40,6 +49,7 @@ class UserViewSet(ViewSet):
         responses={
             HTTP_200_OK: UserSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
@@ -82,12 +92,15 @@ class UserViewSet(ViewSet):
             HTTP_201_CREATED: UserSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
+        throttle_classes=[RedisScopedRateThrottle],
+        throttle_scope="auth",
         url_name="register",
         url_path="register",
     )
@@ -127,12 +140,15 @@ class UserViewSet(ViewSet):
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
+        throttle_classes=[RedisScopedRateThrottle],
+        throttle_scope="auth",
         url_name="login",
         url_path="login",
     )
@@ -177,6 +193,12 @@ class UserViewSet(ViewSet):
                 )
 
             refresh: RefreshToken = RefreshToken.for_user(user)
+            set_temporary_data(
+                "refresh_token",
+                str(refresh["jti"]),
+                {"user_id": user.pk, "email": user.email},
+                timeout=int(refresh.lifetime.total_seconds()),
+            )
             response_data: dict[str, Any] = {
                 "email": user.email,
                 "access": str(refresh.access_token),
@@ -187,4 +209,36 @@ class UserViewSet(ViewSet):
             )
             if serializer.is_valid():
                 return DRFResponse(serializer.data, status=HTTP_200_OK)
+        return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        summary="Store language preference",
+        description="Store the authenticated user's language selection in Redis.",
+        request=LanguagePreferenceSerializer,
+        responses={
+            HTTP_200_OK: LanguagePreferenceSerializer,
+            HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
+        },
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        url_name="language",
+        url_path="language",
+    )
+    def language(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
+        """Store the authenticated user's language preference in Redis."""
+        serializer = LanguagePreferenceSerializer(data=request.data)
+        if serializer.is_valid():
+            set_language_preference(
+                request_cache_identifier(request),
+                serializer.validated_data["language"],
+            )
+            return DRFResponse(serializer.data, status=HTTP_200_OK)
+
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)

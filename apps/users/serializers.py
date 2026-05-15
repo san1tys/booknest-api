@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.conf import settings
 from rest_framework import serializers
 
 from apps.users.models import User
@@ -55,3 +56,9 @@ class UserLoginSuccessSerializer(serializers.Serializer):
     #     """Meta class for UserLoginSuccessSerializer."""
 
     #     fields = ("email", "access", "refresh")
+
+
+class LanguagePreferenceSerializer(serializers.Serializer):
+    """Serializer for storing a temporary language preference in Redis."""
+
+    language = serializers.ChoiceField(choices=settings.LANGUAGES)

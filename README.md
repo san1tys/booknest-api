@@ -9,6 +9,7 @@ Django REST API for a Booking.com-like service: users, hotels, rooms, bookings (
 - JWT (djangorestframework-simplejwt)
 - drf-spectacular (OpenAPI/Swagger)
 - django-filter
+- Redis (cache, temporary data, rate limiting)
 
 ## Setup
 
@@ -61,6 +62,21 @@ docker compose up --build
 When `BOOKNEST_ENV_ID=local`, only the web service runs and Django uses SQLite.
 When `BOOKNEST_ENV_ID=prod`, Docker activates the `prod` profile, starts
 PostgreSQL, runs migrations, and serves the app through Gunicorn.
+
+### Redis settings
+```env
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+CACHE_TTL_SECONDS=300
+TEMP_DATA_TTL_SECONDS=300
+LANGUAGE_PREFERENCE_TTL_SECONDS=2592000
+RATE_LIMIT_ANON=100/hour
+RATE_LIMIT_USER=1000/hour
+RATE_LIMIT_AUTH=10/minute
+```
+
 
 ## API Documentation (Swagger)
 - Swagger UI: http://127.0.0.1:8000/api/docs/
