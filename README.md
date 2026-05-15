@@ -1,94 +1,129 @@
-# BookNest – Hotel Booking API
+# BookNest - Hotel Booking API
 
-Django REST API for a Booking.com-like service: users, hotels, rooms, bookings (JWT auth, permissions, filtering, Swagger docs).
+Django REST API for a Booking.com-like service: users, hotels, rooms, bookings, JWT auth, Redis-backed temporary data, and Swagger/OpenAPI docs.
 
 ## Tech Stack
-- Python 3.x
+- Python 3.12
 - Django
 - Django REST Framework
-- JWT (djangorestframework-simplejwt)
-- drf-spectacular (OpenAPI/Swagger)
-- django-filter
-- Redis (cache, temporary data, rate limiting)
+- drf-spectacular
+- Simple JWT
+- Redis
+- Celery
+- Docker Compose
 
-## Setup
+## Environment File
+Create a `.env` file from `.env.template` before starting:
 
-### 1) Create virtualenv and install dependencies
 ```bash
-python -m venv venv
-source venv/bin/activate  # mac/linux
-# venv\Scripts\activate   # windows
-
-pip install -r requirements.txt
+cp .env.template .env
 ```
 
-### 2) Run migrations
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.template .env
+```
+
+## Local Python Setup
+### 1) Create and activate a virtual environment
 ```bash
-python manage.py makemigrations
+python -m venv venv
+source venv/bin/activate
+```
+
+On Windows:
+
+```powershell
+venv\Scripts\activate
+```
+
+### 2) Install dependencies
+```bash
+pip install -r requirements/local.txt
+```
+
+### 3) Run migrations
+```bash
 python manage.py migrate
 ```
 
-### 3) Create admin user (optional)
+### 4) Seed data manually if needed
 ```bash
-python manage.py createsuperuser
+python manage.py seed_data
 ```
 
-### 4) Run server
+### 5) Run the server
 ```bash
 python manage.py runserver
 ```
 
-## Docker
+## Docker Usage
+The project uses helper scripts:
+- [build.sh](/scripts/build.sh)
+- [start.sh](/scripts/start.sh)
 
-Set `BOOKNEST_ENV_ID` in `.env` and the single `compose.yml` will switch
-behavior automatically.
+### What happens on startup
+- Migrations run automatically in both `local` and `prod`
+- `local` starts Django with `runserver`
+- `prod` starts Django with `gunicorn`
+- `local` runs `python manage.py seed_data` only on the first startup when the database is still empty
 
-### Local setup (SQLite)
+### Build only
 ```bash
-# in .env
-BOOKNEST_ENV_ID=local
-
-docker compose up --build
+./scripts/build.sh local build
+./scripts/build.sh prod build
 ```
 
-### Production-like setup (PostgreSQL)
+### Build and start
 ```bash
-# in .env
-BOOKNEST_ENV_ID=prod
-
-docker compose up --build
+./scripts/build.sh local up
+./scripts/build.sh prod up -d
 ```
 
-When `BOOKNEST_ENV_ID=local`, only the web service runs and Django uses SQLite.
-When `BOOKNEST_ENV_ID=prod`, Docker activates the `prod` profile, starts
-PostgreSQL, runs migrations, and serves the app through Gunicorn.
+### Windows PowerShell
+If `./scripts/...` does not run directly, use Git Bash, WSL, or call it through `bash`:
 
-### Redis settings
+```powershell
+bash ./scripts/build.sh local up
+bash ./scripts/build.sh prod up -d
+```
+
+### Environment Modes
+- `local`: SQLite, development server, optional local Redis usage, auto-seeding on first empty startup
+- `prod`: PostgreSQL profile, Gunicorn, production dependency set
+
+### Useful Local Flags
+From `.env`:
+
 ```env
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-REDIS_PASSWORD=
-CACHE_TTL_SECONDS=300
-TEMP_DATA_TTL_SECONDS=300
-LANGUAGE_PREFERENCE_TTL_SECONDS=2592000
-RATE_LIMIT_ANON=100/hour
-RATE_LIMIT_USER=1000/hour
-RATE_LIMIT_AUTH=10/minute
+BOOKNEST_ENV_ID=local
+USE_REDIS_IN_LOCAL=False
+SEED_LOCAL_ON_FIRST_START=True
 ```
 
+If you want real Redis locally:
 
-## API Documentation (Swagger)
-- Swagger UI: http://127.0.0.1:8000/api/docs/
-- OpenAPI schema: http://127.0.0.1:8000/api/schema/
+```env
+USE_REDIS_IN_LOCAL=True
+```
 
-## Authentication (JWT)
-- Register: `POST /api/auth/register/`
-- Login: `POST /api/auth/login/`
-- Refresh: `POST /api/auth/refresh/`
-- Profile: `GET /api/me/`
+## API Documentation
+- Swagger UI: `http://127.0.0.1:8000/api/docs/swagger/`
+- ReDoc: `http://127.0.0.1:8000/api/docs/redoc/`
+- OpenAPI schema: `http://127.0.0.1:8000/api/schema/`
+
+## Authentication Endpoints
+- Register: `POST /api/users/v1/users/register`
+- Verify email OTP: `POST /api/users/v1/users/verify-email`
+- Resend verification OTP: `POST /api/users/v1/users/resend-verification`
+- Login: `POST /api/users/v1/users/login`
+- Profile: `GET /api/users/v1/users/me`
+- Token refresh: `POST /api/auth/token/refresh/`
+- Token verify: `POST /api/auth/token/verify/`
 
 Header:
-```
+
+```text
 Authorization: Bearer <access_token>
 ```

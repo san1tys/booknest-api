@@ -14,15 +14,42 @@ ENV_POSSIBLE_OPTIONS = (
 ENV_ID = config("BOOKNEST_ENV_ID", default="local", cast=str)
 SECRET_KEY = config("SECRET_KEY", cast=str)
 
+UNFOLD = {
+    "SITE_HEADER": "Booknest admin panel",
+    "SITE_TITLE": "Booknest dashboards",
+    "SITE_SUBTITLE": "User management",
+    "THEME": "dark",
+    "SHOW_THEME_TOGGLE": True,
+    "DASHBOARD_CALLBACK": "settings.unfold_dashboard.dashboard_callback",
+    "COLOR_PALETTE": {
+        "primary": "#10b981",
+        "accent": "#f97316",
+        "background": "#111827",
+        "foreground": "#f3f4f6",
+        "muted": "#6b7280",
+    },
+}
+
 # ----------------------------------------------
 # Redis | Cache | Temporary Data
 #
 REDIS_HOST = config("REDIS_HOST", default="localhost", cast=str)
 REDIS_PORT = config("REDIS_PORT", default=6379, cast=int)
 REDIS_DB = config("REDIS_DB", default=0, cast=int)
+REDIS_CELERY_DB = config("REDIS_CELERY_DB", default=1, cast=int)
 REDIS_PASSWORD = config("REDIS_PASSWORD", default="", cast=str)
 REDIS_TIMEOUT_SECONDS = config("REDIS_TIMEOUT_SECONDS", default=2, cast=int)
 REDIS_KEY_PREFIX = config("REDIS_KEY_PREFIX", default="booknest", cast=str)
+REDIS_IGNORE_EXCEPTIONS = config(
+    "REDIS_IGNORE_EXCEPTIONS",
+    default=True,
+    cast=bool,
+)
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = config(
+    "DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS",
+    default=False,
+    cast=bool,
+)
 
 _REDIS_AUTH = f":{quote(REDIS_PASSWORD, safe='')}@" if REDIS_PASSWORD else ""
 REDIS_URL = config(
@@ -48,14 +75,11 @@ CACHES = {
                 "socket_connect_timeout": REDIS_TIMEOUT_SECONDS,
                 "socket_timeout": REDIS_TIMEOUT_SECONDS,
             },
-            "IGNORE_EXCEPTIONS": True,
+            "IGNORE_EXCEPTIONS": REDIS_IGNORE_EXCEPTIONS,
         },
     }
 }
-DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 
-# Celery is not installed in this project yet, but these settings make Redis the
-# broker/result backend as soon as a Celery app is added.
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL, cast=str)
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL, cast=str)
 
@@ -64,9 +88,40 @@ RATE_LIMIT_USER = config("RATE_LIMIT_USER", default="1000/hour", cast=str)
 RATE_LIMIT_AUTH = config("RATE_LIMIT_AUTH", default="10/minute", cast=str)
 
 # ----------------------------------------------
+# Email | OTP
+#
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+    cast=str,
+)
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL",
+    default="noreply@booknest.local",
+    cast=str,
+)
+EMAIL_HOST = config("EMAIL_HOST", default="localhost", cast=str)
+EMAIL_PORT = config("EMAIL_PORT", default=25, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="", cast=str)
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="", cast=str)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
+
+EMAIL_VERIFICATION_OTP_LENGTH = config(
+    "EMAIL_VERIFICATION_OTP_LENGTH",
+    default=6,
+    cast=int,
+)
+EMAIL_VERIFICATION_OTP_TTL_SECONDS = config(
+    "EMAIL_VERIFICATION_OTP_TTL_SECONDS",
+    default=600,
+    cast=int,
+)
+
+# ----------------------------------------------
 # Django REST Framework
 #
-
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -127,6 +182,23 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+# ----------------------------------------------
+# Shell plus configuration (Django extensions)
+#
+SHELL_PLUS_PRE_IMPORTS = [
+    ("django.db", ("connection", "reset_queries", "connections")),
+    ("datetime", ("datetime", "timedelta", "date")),
+    ("json", ("loads", "dumps")),
+]
+SHELL_PLUS_MODEL_ALIASES = {
+    'auths': {
+        'CustomUser': 'U',
+    },
+}
+SHELL_PLUS = "ipython"
+SHELL_PLUS_PRINT_SQL = True
+SHELL_PLUS_PRINT_SQL_TRUNCATE = 1000
 
 # ----------------------------------------------
 # DRF Spectacular
