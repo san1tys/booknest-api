@@ -10,6 +10,7 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_405_METHOD_NOT_ALLOWED,
 )
 from rest_framework.viewsets import ViewSet
@@ -48,6 +49,7 @@ class UserViewSet(ViewSet):
         responses={
             HTTP_200_OK: UserSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
@@ -90,6 +92,7 @@ class UserViewSet(ViewSet):
             HTTP_201_CREATED: UserSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
@@ -137,6 +140,7 @@ class UserViewSet(ViewSet):
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(
@@ -215,6 +219,7 @@ class UserViewSet(ViewSet):
             HTTP_200_OK: LanguagePreferenceSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
     )
     @action(

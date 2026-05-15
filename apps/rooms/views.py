@@ -11,6 +11,8 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
@@ -44,7 +46,9 @@ class RoomViewSet(ViewSet):
         responses={
             HTTP_201_CREATED: RoomDetailSerializer,
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Create a new room (only hotel owner). Requires auth.",
         summary="Create Room",
@@ -94,6 +98,7 @@ class RoomViewSet(ViewSet):
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Update a room (only hotel owner). Requires auth.",
         summary="Update Room",
@@ -154,6 +159,7 @@ class RoomViewSet(ViewSet):
         responses={
             HTTP_200_OK: RoomDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Retrieve details of a specific room.",
         summary="Get Room Details",
@@ -203,7 +209,10 @@ class RoomViewSet(ViewSet):
         return DRFResponse(data, status=HTTP_200_OK)
 
     @extend_schema(
-        responses={HTTP_200_OK: RoomDetailSerializer(many=True)},
+        responses={
+            HTTP_200_OK: RoomDetailSerializer(many=True),
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
+        },
         description=(
             "List rooms. Query params: hotel, min_price, max_price, "
             "capacity_gte, search, ordering."
@@ -275,6 +284,7 @@ class RoomViewSet(ViewSet):
             HTTP_204_NO_CONTENT: MessageSerializer,
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Delete a room (only hotel owner). Requires auth.",
         summary="Delete Room",

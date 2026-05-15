@@ -12,6 +12,7 @@ from rest_framework.status import (
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
@@ -49,6 +50,7 @@ class HotelViewSet(ViewSet):
             HTTP_400_BAD_REQUEST: ValidationErrorSerializer,
             HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Create a new hotel with the provided details. Requires authentication.",
         summary="Create Hotel",
@@ -93,6 +95,7 @@ class HotelViewSet(ViewSet):
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Update an existing hotel with the provided details. Requires authentication and ownership of the hotel.",
         summary="Update Hotel",
@@ -160,6 +163,7 @@ class HotelViewSet(ViewSet):
         responses={
             HTTP_200_OK: HotelDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Retrieve details of a specific hotel by its ID.",
         summary="Get Hotel Details",
@@ -217,6 +221,7 @@ class HotelViewSet(ViewSet):
         responses={
             HTTP_200_OK: HotelDetailSerializer(many=True),
             HTTP_405_METHOD_NOT_ALLOWED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Retrieve a list of all hotels.",
         summary="List Hotels",
@@ -254,8 +259,10 @@ class HotelViewSet(ViewSet):
     @extend_schema(
         responses={
             HTTP_204_NO_CONTENT: MessageSerializer,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
             HTTP_404_NOT_FOUND: ErrorDetailSerializer,
             HTTP_403_FORBIDDEN: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         description="Delete a specific hotel by its ID. Requires authentication and ownership of the hotel.",
         summary="Delete Hotel",

@@ -10,6 +10,7 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
 
@@ -19,6 +20,7 @@ from apps.abstract.redis_storage import (
     cache_get,
     cache_set,
 )
+from apps.abstract.serializers import ErrorDetailSerializer
 from apps.bookings.models import Booking, BookingStatus
 from apps.reviews.models import Review
 from apps.reviews.serializers import ReviewCreateSerializer, ReviewListSerializer
@@ -57,7 +59,10 @@ class HotelReviewViewSet(ViewSet):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        responses={HTTP_200_OK: ReviewListSerializer(many=True)},
+        responses={
+            HTTP_200_OK: ReviewListSerializer(many=True),
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
+        },
         summary="List hotel reviews",
         description="Return all reviews for a specific hotel.",
     )
@@ -90,7 +95,8 @@ class HotelReviewViewSet(ViewSet):
         responses={
             HTTP_201_CREATED: ReviewListSerializer,
             HTTP_400_BAD_REQUEST: dict,
-            HTTP_401_UNAUTHORIZED: dict,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
         },
         summary="Create hotel review",
         description=(
