@@ -227,6 +227,7 @@ class UserViewSet(ViewSet):
     def language(
         self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
     ) -> DRFResponse:
+        """Store the authenticated user's language preference in Redis."""
         serializer = LanguagePreferenceSerializer(data=request.data)
         if serializer.is_valid():
             set_language_preference(

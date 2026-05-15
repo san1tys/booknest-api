@@ -22,6 +22,7 @@ def _safe_cache_call(
     callback: Callable[[], Any],
     default: Any = None,
 ) -> Any:
+    """Run a cache operation and return a fallback if Redis is unavailable."""
     try:
         return callback()
     except Exception as exc:
@@ -30,20 +31,26 @@ def _safe_cache_call(
 
 
 def cache_get(key: str, default: Any = None) -> Any:
+    """Read a value from Redis cache with connection-failure handling."""
     return _safe_cache_call("get", lambda: cache.get(key, default), default)
 
 
 def cache_set(key: str, value: Any, timeout: int | None = None) -> bool:
+    """Store a value in Redis cache using the default cache TTL when omitted."""
     ttl = timeout if timeout is not None else settings.CACHE_TTL_SECONDS
     return bool(_safe_cache_call("set", lambda: cache.set(key, value, ttl), False))
 
 
 def cache_delete(key: str) -> bool:
+    """Delete one value from Redis cache if the backend is reachable."""
     return bool(_safe_cache_call("delete", lambda: cache.delete(key), False))
 
 
 def cache_delete_pattern(pattern: str) -> int:
+    """Delete Redis keys by pattern when the backend supports pattern deletes."""
+
     def _delete_pattern() -> int:
+        """Call django-redis delete_pattern when available."""
         delete_pattern = getattr(cache, "delete_pattern", None)
         if delete_pattern is None:
             return 0
@@ -53,6 +60,7 @@ def cache_delete_pattern(pattern: str) -> int:
 
 
 def request_cache_identifier(request: HttpRequest) -> str:
+    """Return the best cache identifier for a user, session, or client IP."""
     user = getattr(request, "user", None)
     if user is not None and user.is_authenticated:
         return f"user:{user.pk}"
@@ -67,6 +75,7 @@ def request_cache_identifier(request: HttpRequest) -> str:
 
 
 def temporary_data_key(name: str, identifier: str) -> str:
+    """Build a Redis key for temporary user/session data."""
     return build_cache_key("temporary", name, identifier)
 
 
@@ -76,23 +85,28 @@ def set_temporary_data(
     value: Any,
     timeout: int | None = None,
 ) -> bool:
+    """Store temporary user/session data in Redis."""
     ttl = timeout if timeout is not None else settings.TEMP_DATA_TTL_SECONDS
     return cache_set(temporary_data_key(name, identifier), value, ttl)
 
 
 def get_temporary_data(name: str, identifier: str, default: Any = None) -> Any:
+    """Read temporary user/session data from Redis."""
     return cache_get(temporary_data_key(name, identifier), default)
 
 
 def delete_temporary_data(name: str, identifier: str) -> bool:
+    """Delete temporary user/session data from Redis."""
     return cache_delete(temporary_data_key(name, identifier))
 
 
 def language_preference_key(identifier: str) -> str:
+    """Build a Redis key for a user's language preference."""
     return build_cache_key("language", identifier)
 
 
 def set_language_preference(identifier: str, language: str) -> bool:
+    """Store a language preference in Redis."""
     return cache_set(
         language_preference_key(identifier),
         language,
@@ -101,4 +115,5 @@ def set_language_preference(identifier: str, language: str) -> bool:
 
 
 def get_language_preference(identifier: str) -> str | None:
+    """Read a language preference from Redis."""
     return cache_get(language_preference_key(identifier))

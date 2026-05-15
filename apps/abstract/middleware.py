@@ -22,9 +22,11 @@ class RedisLanguagePreferenceMiddleware:
     """
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        """Store the next middleware/view callable."""
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
+        """Apply, persist, and expose the request language preference."""
         identifier = self._language_identifier(request)
         language = self._selected_language(request)
 
@@ -52,6 +54,7 @@ class RedisLanguagePreferenceMiddleware:
         return response
 
     def _selected_language(self, request: HttpRequest) -> str | None:
+        """Read a supported language from request headers or query params."""
         language = (
             request.headers.get("X-Language")
             or request.GET.get("lang")
@@ -60,6 +63,7 @@ class RedisLanguagePreferenceMiddleware:
         return normalize_language(language)
 
     def _language_identifier(self, request: HttpRequest) -> str:
+        """Use JWT user id for language keys before DRF authentication runs."""
         auth_header = request.headers.get("Authorization", "")
         auth_parts = auth_header.split()
         if len(auth_parts) == 2 and auth_parts[0].lower() == "bearer":
@@ -77,6 +81,7 @@ class RedisLanguagePreferenceMiddleware:
 
 
 def normalize_language(language: str | None) -> str | None:
+    """Normalize a language value to one of the configured Django languages."""
     if not language:
         return None
 

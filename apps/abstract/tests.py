@@ -26,19 +26,34 @@ LOC_MEM_CACHES = {
 
 @override_settings(CACHES=LOC_MEM_CACHES)
 class RedisStorageTests(SimpleTestCase):
+    """Tests for Redis-backed temporary data and language preference helpers."""
+
     def setUp(self) -> None:
+        """Clear the in-memory test cache before each test."""
         cache.clear()
 
-    def test_temporary_data_helpers_store_and_delete_values(self) -> None:
-        set_temporary_data("otp", "user:1", "123456", timeout=60)
+    def test_temporary_data_helpers_store_and_delete_refresh_token(self) -> None:
+        """Temporary helpers store refresh-token metadata used by login."""
+        refresh_token_data = {"user_id": 1, "email": "user@example.com"}
 
-        self.assertEqual(get_temporary_data("otp", "user:1"), "123456")
+        set_temporary_data(
+            "refresh_token",
+            "token-jti",
+            refresh_token_data,
+            timeout=60,
+        )
 
-        delete_temporary_data("otp", "user:1")
-        self.assertIsNone(get_temporary_data("otp", "user:1"))
+        self.assertEqual(
+            get_temporary_data("refresh_token", "token-jti"),
+            refresh_token_data,
+        )
+
+        delete_temporary_data("refresh_token", "token-jti")
+        self.assertIsNone(get_temporary_data("refresh_token", "token-jti"))
 
     @override_settings(LANGUAGES=(("en-us", "English"), ("ru", "Russian")))
     def test_language_preference_middleware_stores_supported_language(self) -> None:
+        """Language middleware stores a supported request language in cache."""
         factory = RequestFactory()
         request = factory.get("/", HTTP_X_LANGUAGE="ru", REMOTE_ADDR="127.0.0.1")
         middleware = RedisLanguagePreferenceMiddleware(lambda req: HttpResponse("ok"))
@@ -54,6 +69,7 @@ class RedisStorageTests(SimpleTestCase):
 
     @override_settings(LANGUAGES=(("en-us", "English"), ("kk", "Kazakh")))
     def test_language_preference_middleware_uses_jwt_user_key(self) -> None:
+        """Language middleware stores authenticated preferences by JWT user id."""
         token = AccessToken()
         token["user_id"] = 7
         factory = RequestFactory()
@@ -71,6 +87,7 @@ class RedisStorageTests(SimpleTestCase):
 
     @override_settings(LANGUAGES=(("en-us", "English"), ("ru", "Russian")))
     def test_normalize_language_accepts_base_language_matches(self) -> None:
+        """Language normalization maps regional values to supported languages."""
         self.assertEqual(normalize_language("en-US,en;q=0.9"), "en-us")
         self.assertEqual(normalize_language("ru-RU"), "ru")
         self.assertIsNone(normalize_language("fr"))
