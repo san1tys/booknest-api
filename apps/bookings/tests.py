@@ -194,14 +194,14 @@ class BookingEndpointTests(TestCase):
         """Guests see their own bookings."""
         response = self.guest_client.get(self.list_url)
         self.assertEqual(response.status_code, 200, response.data)
-        ids = [b["id"] for b in response.data]
+        ids = [b["id"] for b in response.data["results"]]
         self.assertIn(self.booking.pk, ids)
 
     def test_list_bookings_returns_hotel_bookings_for_hotel_owner(self) -> None:
         """Hotel owners see bookings on their hotels."""
         response = self.owner_client.get(self.list_url)
         self.assertEqual(response.status_code, 200, response.data)
-        ids = [b["id"] for b in response.data]
+        ids = [b["id"] for b in response.data["results"]]
         self.assertIn(self.booking.pk, ids)
 
     def test_list_bookings_returns_401_for_anonymous(self) -> None:

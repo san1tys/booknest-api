@@ -142,6 +142,8 @@ REST_FRAMEWORK = {
         "user": RATE_LIMIT_USER,
         "auth": RATE_LIMIT_AUTH,
     },
+    "DEFAULT_PAGINATION_CLASS": "apps.abstract.pagination.StandardPagination",
+    "PAGE_SIZE": 20,
 }
 
 # ----------------------------------------------

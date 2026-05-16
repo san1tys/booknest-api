@@ -2,7 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -15,6 +15,7 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.pagination import StandardPagination
 from apps.abstract.redis_storage import (
     build_cache_key,
     cache_delete_pattern,
@@ -66,6 +67,12 @@ class HotelReviewViewSet(ViewSet):
         },
         summary="List hotel reviews",
         description="Return all reviews for a specific hotel.",
+        parameters=[
+            OpenApiParameter("page", int, description="Page number"),
+            OpenApiParameter(
+                "page_size", int, description="Results per page (max 100)"
+            ),
+        ],
     )
     def list(
         self, request: DRFRequest, hotel_id: int, *args: Any, **kwargs: Any
@@ -79,17 +86,24 @@ class HotelReviewViewSet(ViewSet):
         Returns:
             DRFResponse: The HTTP response containing the list of reviews or error information.
         """
-        cache_key = build_cache_key("reviews:hotel:list", hotel_id)
+        cache_key = build_cache_key(
+            "reviews:hotel:list", hotel_id, request.get_full_path()
+        )
         cached_data = cache_get(cache_key)
         if cached_data is not None:
             return DRFResponse(cached_data, status=HTTP_200_OK)
 
-        queryset: QuerySet[Review] = Review.objects.select_related(
-            "user", "hotel"
-        ).filter(hotel_id=hotel_id)
-        serializer: ReviewListSerializer = ReviewListSerializer(queryset, many=True)
-        cache_set(cache_key, serializer.data)
-        return DRFResponse(serializer.data, status=HTTP_200_OK)
+        queryset: QuerySet[Review] = (
+            Review.objects.select_related("user", "hotel")
+            .filter(hotel_id=hotel_id)
+            .order_by("pk")
+        )
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer: ReviewListSerializer = ReviewListSerializer(page, many=True)
+        response: DRFResponse = paginator.get_paginated_response(serializer.data)
+        cache_set(cache_key, response.data)
+        return response
 
     @extend_schema(
         request=ReviewCreateSerializer,

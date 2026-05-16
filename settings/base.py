@@ -2,10 +2,15 @@
 import os
 from pathlib import Path
 
+from decouple import Csv, config
 from django.utils.translation import gettext_lazy as _
 
 # Project modules
 from settings.conf import *
+
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
 
 # ------------------------
 # Path
@@ -41,6 +46,7 @@ DJANGO_AND_THIRD_PARTY_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "corsheaders",
     "django.contrib.staticfiles",
     # Third-party
     "channels",
@@ -65,6 +71,7 @@ INSTALLED_APPS = DJANGO_AND_THIRD_PARTY_APPS + PROJECT_APPS
 # Miidleware | Templates | Validators
 # ------------------------
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
