@@ -3,9 +3,7 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
-
 from settings.conf import ENV_ID
-
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"settings.env.{ENV_ID}")
 

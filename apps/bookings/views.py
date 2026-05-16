@@ -1,10 +1,11 @@
 from datetime import date
 from typing import Any
 
+from asgiref.sync import async_to_sync
 from django.db.models import Q, QuerySet
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
-from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -19,6 +20,7 @@ from rest_framework.status import (
 from rest_framework.viewsets import ViewSet
 
 from apps.abstract.serializers import ErrorDetailSerializer, ValidationErrorSerializer
+from apps.bookings.consumers import BookingStatusConsumer
 from apps.bookings.models import Booking, BookingStatus
 from apps.bookings.serializers import (
     AvailabilityQuerySerializer,
@@ -285,6 +287,12 @@ class BookingViewSet(ViewSet):
 
         booking.status = BookingStatus.CANCELLED
         booking.save()
+
+        async_to_sync(BookingStatusConsumer.notify)(
+            user_id=booking.user_id,
+            booking_id=booking.id,
+            status=booking.status,
+        )
 
         serializer: BookingCancelSerializer = BookingCancelSerializer(booking)
         return DRFResponse(serializer.data, status=HTTP_200_OK)

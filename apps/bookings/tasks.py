@@ -10,7 +10,6 @@ from django.utils import timezone
 from apps.bookings.models import Booking, BookingStatus
 from apps.users.models import User
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -43,9 +42,7 @@ def build_check_in_reminder_message(user: User, bookings: list[Booking]) -> str:
 def send_today_check_in_reminders(target_date_iso: str | None = None) -> int:
     """Send one reminder email per user for bookings that start today."""
     reminder_date = (
-        date.fromisoformat(target_date_iso)
-        if target_date_iso
-        else timezone.localdate()
+        date.fromisoformat(target_date_iso) if target_date_iso else timezone.localdate()
     )
 
     bookings = (

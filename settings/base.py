@@ -1,10 +1,10 @@
 # Python modules
 import os
 
+from django.utils.translation import gettext_lazy as _
+
 # Project modules
 from settings.conf import *
-
-from django.utils.translation import gettext_lazy as _
 
 # ------------------------
 # Path
@@ -42,6 +42,7 @@ DJANGO_AND_THIRD_PARTY_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -104,7 +105,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-
 # ----------------------------------------------
 # Internationalization
 #
@@ -129,9 +129,19 @@ LOCALE_PATHS = [
 # Static | Media
 #
 STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 MEDIA_URL = "media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# ----------------------------------------------
+# Channels Configuration
+#
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},  # noqa: F405
+    }
+}
 
 # ----------------------------------------------
 # Celery Configuration
@@ -144,4 +154,4 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

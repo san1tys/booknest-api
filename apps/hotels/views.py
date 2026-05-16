@@ -1,22 +1,22 @@
 from typing import Any
 
 from django.db.models import QuerySet
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
-from django.utils.translation import gettext_lazy as _
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
-    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
+    HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
 

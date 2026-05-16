@@ -192,8 +192,8 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("json", ("loads", "dumps")),
 ]
 SHELL_PLUS_MODEL_ALIASES = {
-    'auths': {
-        'CustomUser': 'U',
+    "auths": {
+        "CustomUser": "U",
     },
 }
 SHELL_PLUS = "ipython"

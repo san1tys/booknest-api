@@ -88,5 +88,6 @@ gunicorn==25.3.0
 celery==5.6.3
 channels==4.3.2
 channels-redis==4.0.0
+daphne==4.1.2
 redis==5.0.0
 
