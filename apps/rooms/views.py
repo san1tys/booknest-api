@@ -326,11 +326,11 @@ class RoomViewSet(ViewSet):
         except Room.DoesNotExist:
             return DRFResponse({"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND)
 
-        # if room.hotel.owner_id != request.user.id:
-        #     return DRFResponse(
-        #         {"detail": "You do not have permission to delete this room."},
-        #         status=HTTP_403_FORBIDDEN,
-        #     )
+        if room.hotel.owner_id != request.user.id:
+            return DRFResponse(
+                {"detail": _("You do not have permission to delete this room.")},
+                status=HTTP_403_FORBIDDEN,
+            )
 
         room_id = room.pk
         room.delete()
