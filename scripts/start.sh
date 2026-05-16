@@ -38,8 +38,8 @@ if [ "$APP_ENV" = "local" ] && [ "$SEED_LOCAL_ON_FIRST_START" = "true" ]; then
 fi
 
 if [ "$APP_ENV" = "prod" ]; then
-  echo "Launching Gunicorn..."
-  exec gunicorn settings.wsgi:application --bind 0.0.0.0:8000
+  echo "Launching Daphne..."
+  exec daphne -b 0.0.0.0 -p 8000 settings.asgi:application
 fi
 
 echo "Launching Django development server..."

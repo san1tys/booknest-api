@@ -30,6 +30,3 @@ def send_otp(to_email: str, subject: str, message: str) -> bool:
 
     logger.info("OTP email send result for %s: %s", to_email, sent_count == 1)
     return sent_count == 1
-
-
-send_OTP = send_otp
