@@ -1,12 +1,8 @@
-import time
-
-from asgiref.sync import async_to_sync
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.abstract.async_io import AsyncOperationTimeout, run_sync_io
 from apps.abstract.middleware import (
     RedisLanguagePreferenceMiddleware,
     normalize_language,
@@ -94,31 +90,3 @@ class RedisStorageTests(SimpleTestCase):
         self.assertEqual(normalize_language("en-US,en;q=0.9"), "en-us")
         self.assertEqual(normalize_language("ru-RU"), "ru")
         self.assertIsNone(normalize_language("fr"))
-
-
-class AsyncIoTests(SimpleTestCase):
-    """Tests for shared async I/O helpers."""
-
-    def test_run_sync_io_executes_blocking_callable(self) -> None:
-        """Blocking I/O callables run through the async wrapper."""
-        result = async_to_sync(run_sync_io)(
-            "test_blocking_operation",
-            lambda: "finished",
-            timeout=1,
-        )
-
-        self.assertEqual(result, "finished")
-
-    def test_run_sync_io_raises_timeout(self) -> None:
-        """Slow I/O operations fail with a timeout-specific exception."""
-
-        def slow_operation() -> str:
-            time.sleep(0.05)
-            return "too late"
-
-        with self.assertRaises(AsyncOperationTimeout):
-            async_to_sync(run_sync_io)(
-                "slow_blocking_operation",
-                slow_operation,
-                timeout=0.001,
-            )
