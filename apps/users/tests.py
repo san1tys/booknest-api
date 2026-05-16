@@ -95,9 +95,7 @@ class UserOtpFlowTests(TestCase):
         self.assertIsNone(get_email_verification_otp(user.email))
 
     @patch("apps.users.services.send_email.delay")
-    def test_resend_verification_sends_fresh_otp(
-        self, mocked_delay: MagicMock
-    ) -> None:
+    def test_resend_verification_sends_fresh_otp(self, mocked_delay: MagicMock) -> None:
         """Resending verification stores a new OTP and queues another email."""
         user = User.objects.create_user(
             email="reader@example.com",

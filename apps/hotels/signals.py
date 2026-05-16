@@ -1,6 +1,6 @@
+from django.db.models import Model
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from django.db.models import Model
 
 from apps.abstract.redis_storage import (
     build_cache_key,

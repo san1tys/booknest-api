@@ -1,6 +1,5 @@
 import pytest
 
-
 ENDPOINT_NAMES = [
     "users_me",
     "users_register",

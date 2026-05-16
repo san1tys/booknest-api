@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from rest_framework.throttling import (
     AnonRateThrottle,
