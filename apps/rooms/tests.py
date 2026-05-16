@@ -1,23 +1,13 @@
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.abstract.testing import bearer_token, build_locmem_caches
 from apps.hotels.models import Hotel
 from apps.rooms.models import Room
 from apps.users.models import User
 
-ROOM_TEST_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "rooms-endpoint-tests",
-    }
-}
-
-
-def _bearer_token(user: User) -> str:
-    """Mint an access token for the given user."""
-    return str(RefreshToken.for_user(user).access_token)
+ROOM_TEST_CACHES = build_locmem_caches("rooms-endpoint-tests")
 
 
 @override_settings(
@@ -56,11 +46,11 @@ class RoomEndpointTests(TestCase):
         self.client = APIClient()
         self.owner_client = APIClient()
         self.owner_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.owner)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.owner)}"
         )
         self.intruder_client = APIClient()
         self.intruder_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.intruder)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.intruder)}"
         )
 
         self.list_url = "/api/hotels/v1/rooms/list"
@@ -225,11 +215,13 @@ class RoomEndpointTests(TestCase):
     # --- IsOwner permission coverage -----------------------------------------
 
     def test_non_owner_cannot_delete_room(self) -> None:
+        """A non-owner cannot delete a room through the endpoint."""
         response = self.intruder_client.delete(self.delete_url)
         self.assertEqual(response.status_code, 403)
         self.assertTrue(Room.objects.filter(pk=self.room.pk).exists())
 
     def test_non_owner_cannot_update_room(self) -> None:
+        """A non-owner cannot update a room through the endpoint."""
         response = self.intruder_client.put(
             self.update_url,
             {
@@ -246,6 +238,7 @@ class RoomEndpointTests(TestCase):
         self.assertNotEqual(self.room.title, "Hijacked")
 
     def test_owner_can_delete_room(self) -> None:
+        """The owner can still delete the room successfully."""
         response = self.owner_client.delete(self.delete_url)
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Room.objects.filter(pk=self.room.pk).exists())

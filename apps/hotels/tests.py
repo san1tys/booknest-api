@@ -1,22 +1,12 @@
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.abstract.testing import bearer_token, build_locmem_caches
 from apps.hotels.models import Hotel
 from apps.users.models import User
 
-HOTEL_TEST_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "hotels-endpoint-tests",
-    }
-}
-
-
-def _bearer_token(user: User) -> str:
-    """Mint an access token for the given user."""
-    return str(RefreshToken.for_user(user).access_token)
+HOTEL_TEST_CACHES = build_locmem_caches("hotels-endpoint-tests")
 
 
 @override_settings(
@@ -50,11 +40,11 @@ class HotelEndpointTests(TestCase):
         self.client = APIClient()
         self.owner_client = APIClient()
         self.owner_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.owner)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.owner)}"
         )
         self.intruder_client = APIClient()
         self.intruder_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.intruder)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.intruder)}"
         )
 
         self.list_url = "/api/hotels/v1/hotels/list"

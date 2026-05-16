@@ -4,25 +4,15 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.abstract.testing import bearer_token, build_locmem_caches
 from apps.bookings.models import Booking, BookingStatus
 from apps.hotels.models import Hotel
 from apps.reviews.models import Review
 from apps.rooms.models import Room
 from apps.users.models import User
 
-REVIEW_TEST_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "reviews-endpoint-tests",
-    }
-}
-
-
-def _bearer_token(user: User) -> str:
-    """Mint an access token for the given user."""
-    return str(RefreshToken.for_user(user).access_token)
+REVIEW_TEST_CACHES = build_locmem_caches("reviews-endpoint-tests")
 
 
 @override_settings(
@@ -72,11 +62,11 @@ class ReviewEndpointTests(TestCase):
         self.client = APIClient()
         self.guest_client = APIClient()
         self.guest_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.guest)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.guest)}"
         )
         self.owner_client = APIClient()
         self.owner_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.hotel_owner)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.hotel_owner)}"
         )
 
         self.list_url = f"/api/hotels/hotels/{self.hotel.pk}/reviews/"

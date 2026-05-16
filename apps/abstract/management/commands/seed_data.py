@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 # Django modules
 from django.utils import timezone
 
-from apps.bookings.models import Booking
+from apps.bookings.models import Booking, BookingStatus
 from apps.hotels.models import Hotel
 from apps.reviews.models import Review
 from apps.rooms.models import Room
@@ -88,11 +88,26 @@ class Command(BaseCommand):
         "Good value for money.",
     )
 
-    STATUSES = ("pending", "confirmed", "canceled", "completed")
+    STATUSES = (
+        BookingStatus.PENDING,
+        BookingStatus.CONFIRMED,
+        BookingStatus.CANCELLED,
+        BookingStatus.COMPLETED,
+    )
 
-    # ---------------- USERS ---------------- #
+    def _write_created_total(
+        self,
+        entity_name: str,
+        before_count: int,
+        after_count: int,
+    ) -> None:
+        """Print how many rows were created for a seeded entity."""
+        self.stdout.write(
+            self.style.SUCCESS(f"Created {after_count - before_count} {entity_name}")
+        )
 
-    def __generate_users(self, count: int = 50) -> None:
+    def _generate_users(self, count: int = 50) -> None:
+        """Generate a batch of users with random names and email domains."""
 
         users_before = User.objects.count()
         users: list[User] = []
@@ -115,15 +130,10 @@ class Command(BaseCommand):
 
         User.objects.bulk_create(users, ignore_conflicts=True)
 
-        users_after = User.objects.count()
+        self._write_created_total("users", users_before, User.objects.count())
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {users_after - users_before} users")
-        )
-
-    # ---------------- HOTELS ---------------- #
-
-    def __generate_hotels(self, count: int = 20) -> None:
+    def _generate_hotels(self, count: int = 20) -> None:
+        """Generate a batch of hotels owned by existing users."""
 
         users = list(User.objects.all())
 
@@ -148,15 +158,10 @@ class Command(BaseCommand):
 
         Hotel.objects.bulk_create(hotels, ignore_conflicts=True)
 
-        hotels_after = Hotel.objects.count()
+        self._write_created_total("hotels", hotels_before, Hotel.objects.count())
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {hotels_after - hotels_before} hotels")
-        )
-
-    # ---------------- ROOMS ---------------- #
-
-    def __generate_rooms(self, count_per_hotel: int = 5) -> None:
+    def _generate_rooms(self, count_per_hotel: int = 5) -> None:
+        """Generate a set of rooms for each hotel."""
 
         hotels = list(Hotel.objects.all())
 
@@ -180,15 +185,10 @@ class Command(BaseCommand):
 
         Room.objects.bulk_create(rooms, ignore_conflicts=True)
 
-        rooms_after = Room.objects.count()
+        self._write_created_total("rooms", rooms_before, Room.objects.count())
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {rooms_after - rooms_before} rooms")
-        )
-
-    # ---------------- BOOKINGS ---------------- #
-
-    def __generate_bookings(self, count: int = 50) -> None:
+    def _generate_bookings(self, count: int = 50) -> None:
+        """Generate a batch of bookings across existing users and rooms."""
 
         users = list(User.objects.all())
         rooms = list(Room.objects.all())
@@ -221,15 +221,10 @@ class Command(BaseCommand):
 
         Booking.objects.bulk_create(bookings, ignore_conflicts=True)
 
-        bookings_after = Booking.objects.count()
+        self._write_created_total("bookings", bookings_before, Booking.objects.count())
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {bookings_after - bookings_before} bookings")
-        )
-
-    # ---------------- REVIEWS ---------------- #
-
-    def __generate_reviews(self, count: int = 40) -> None:
+    def _generate_reviews(self, count: int = 40) -> None:
+        """Generate a batch of reviews across existing users and hotels."""
 
         users = list(User.objects.all())
         hotels = list(Hotel.objects.all())
@@ -251,23 +246,18 @@ class Command(BaseCommand):
 
         Review.objects.bulk_create(reviews, ignore_conflicts=True)
 
-        reviews_after = Review.objects.count()
-
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {reviews_after - reviews_before} reviews")
-        )
-
-    # ---------------- HANDLE ---------------- #
+        self._write_created_total("reviews", reviews_before, Review.objects.count())
 
     def handle(self, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:
+        """Populate the database with a representative set of sample data."""
 
         start_time = datetime.now()
 
-        self.__generate_users()
-        self.__generate_hotels()
-        self.__generate_rooms()
-        self.__generate_bookings()
-        self.__generate_reviews()
+        self._generate_users()
+        self._generate_hotels()
+        self._generate_rooms()
+        self._generate_bookings()
+        self._generate_reviews()
 
         self.stdout.write(
             self.style.SUCCESS(

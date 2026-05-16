@@ -16,13 +16,9 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
-admin.site.site_header = getattr(settings, "UNFOLD", {}).get(
-    "SITE_HEADER", "Booknest admin panel"
-)
-admin.site.site_title = getattr(settings, "UNFOLD", {}).get("SITE_TITLE", "Booknest")
-admin.site.index_title = getattr(settings, "UNFOLD", {}).get(
-    "SITE_SUBTITLE", "Administration"
-)
+admin.site.site_header = "Booknest Admin"
+admin.site.site_title = "Booknest"
+admin.site.index_title = "Administration"
 
 urlpatterns = [
     path("admin/", admin.site.urls),

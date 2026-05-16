@@ -5,6 +5,8 @@ from apps.rooms.models import Room
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
+    """Admin configuration for the Room model."""
+
     list_display = (
         "id",
         "title",

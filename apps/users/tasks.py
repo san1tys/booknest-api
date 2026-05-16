@@ -9,8 +9,8 @@ from apps.abstract.async_io import AsyncOperationError, send_mail_async
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def send_OTP(to_email: str, subject: str, message: str) -> bool:
+@shared_task(name="apps.users.tasks.send_otp")
+def send_otp(to_email: str, subject: str, message: str) -> bool:
     """Send an email through Django's configured email backend."""
     logger.info(
         "Queue worker sending OTP email to %s with subject '%s'", to_email, subject
@@ -30,3 +30,6 @@ def send_OTP(to_email: str, subject: str, message: str) -> bool:
 
     logger.info("OTP email send result for %s: %s", to_email, sent_count == 1)
     return sent_count == 1
+
+
+send_OTP = send_otp

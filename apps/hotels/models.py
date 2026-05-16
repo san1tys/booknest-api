@@ -83,6 +83,8 @@ class Hotel(AbstractBaseModel):
     )
 
     class Meta:
+        """Metadata for hotel verbose names."""
+
         verbose_name = _("Hotel")
         verbose_name_plural = _("Hotels")
 
@@ -93,8 +95,10 @@ class Hotel(AbstractBaseModel):
         return super().clean()
 
     def save(self, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> None:
+        """Validate the hotel before saving it."""
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
+        """Return the hotel name for admin and logs."""
         return self.name

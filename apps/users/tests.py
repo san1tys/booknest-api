@@ -1,37 +1,22 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.abstract.testing import bearer_token, build_locmem_caches
 from apps.users.models import User
 from apps.users.services import (
     get_email_verification_otp,
     set_email_verification_otp,
 )
-from apps.users.tasks import send_OTP as send_email
+from apps.users.tasks import send_otp as send_email
 
-LOC_MEM_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "users-otp-tests",
-    }
-}
+LOC_MEM_CACHES = build_locmem_caches("users-otp-tests")
 
 
-USER_ENDPOINT_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "users-endpoint-tests",
-    }
-}
-
-
-def _bearer_token(user: User) -> str:
-    """Mint an access token for the given user."""
-    return str(RefreshToken.for_user(user).access_token)
+USER_ENDPOINT_CACHES = build_locmem_caches("users-endpoint-tests")
 
 
 @override_settings(
@@ -53,7 +38,7 @@ class UserOtpFlowTests(TestCase):
 
     @patch("apps.users.services.send_email.delay")
     def test_register_creates_unverified_user_and_queues_otp(
-        self, mocked_delay
+        self, mocked_delay: MagicMock
     ) -> None:
         """Registering a user stores an OTP and queues a verification email."""
         response = self.client.post(
@@ -110,7 +95,9 @@ class UserOtpFlowTests(TestCase):
         self.assertIsNone(get_email_verification_otp(user.email))
 
     @patch("apps.users.services.send_email.delay")
-    def test_resend_verification_sends_fresh_otp(self, mocked_delay) -> None:
+    def test_resend_verification_sends_fresh_otp(
+        self, mocked_delay: MagicMock
+    ) -> None:
         """Resending verification stores a new OTP and queues another email."""
         user = User.objects.create_user(
             email="reader@example.com",
@@ -168,7 +155,7 @@ class UserEndpointTests(TestCase):
         self.client = APIClient()
         self.auth_client = APIClient()
         self.auth_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.verified_user)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.verified_user)}"
         )
 
         self.me_url = "/api/users/v1/users/me"
@@ -201,7 +188,7 @@ class UserEndpointTests(TestCase):
     # --- POST /register ------------------------------------------------------
 
     @patch("apps.users.services.send_email.delay")
-    def test_register_creates_unverified_user(self, mocked_delay) -> None:
+    def test_register_creates_unverified_user(self, mocked_delay: MagicMock) -> None:
         """Valid registration creates a new unverified user and queues an OTP email."""
         response = self.client.post(
             self.register_url,
@@ -274,7 +261,7 @@ class UserEndpointTests(TestCase):
     # --- POST /resend-verification -------------------------------------------
 
     @patch("apps.users.services.send_email.delay")
-    def test_resend_verification_returns_200(self, mocked_delay) -> None:
+    def test_resend_verification_returns_200(self, mocked_delay: MagicMock) -> None:
         """Unverified users can request a fresh OTP."""
         response = self.client.post(
             self.resend_url,
