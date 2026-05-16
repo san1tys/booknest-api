@@ -1,8 +1,14 @@
 # Project modules
 from datetime import timedelta
+from pathlib import Path
 from urllib.parse import quote
 
-from decouple import config
+from decouple import Config, RepositoryEnv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BASE_DIR / ".env"
+
+config = Config(RepositoryEnv(ENV_FILE))
 
 # -----------------------------------
 # Env id
@@ -80,12 +86,34 @@ CACHES = {
     }
 }
 
-CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL, cast=str)
-CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL, cast=str)
+
+# ----------------------------------------------
+# Celery Configuration
+#
+_celery_redis_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"  # noqa: F405
+CELERY_BROKER_URL = _celery_redis_url
+CELERY_RESULT_BACKEND = _celery_redis_url
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = config("TIME_ZONE", default="UTC", cast=str)
+
+# CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL, cast=str)
+# CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL, cast=str)
 
 RATE_LIMIT_ANON = config("RATE_LIMIT_ANON", default="100/hour", cast=str)
 RATE_LIMIT_USER = config("RATE_LIMIT_USER", default="1000/hour", cast=str)
 RATE_LIMIT_AUTH = config("RATE_LIMIT_AUTH", default="10/minute", cast=str)
+
+# ----------------------------------------------
+# Channels Configuration
+#
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},  # noqa: F405
+    }
+}
 
 # ----------------------------------------------
 # Email | OTP
