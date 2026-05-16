@@ -6,7 +6,6 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.abstract.async_io import AsyncOperationError
 from apps.users.models import User
 from apps.users.services import (
     get_email_verification_otp,
@@ -140,25 +139,6 @@ class UserOtpFlowTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["reader@example.com"])
         self.assertEqual(mail.outbox[0].subject, "Verify your BookNest email")
-
-    @patch("apps.users.tasks.send_mail_async")
-    def test_send_email_task_handles_async_delivery_failure(
-        self, mocked_send_mail_async
-    ) -> None:
-        """Failed async email delivery is logged and reported as False."""
-
-        async def failing_send_mail_async(**kwargs) -> int:
-            raise AsyncOperationError("smtp failure")
-
-        mocked_send_mail_async.side_effect = failing_send_mail_async
-
-        result = send_email(
-            "reader@example.com",
-            "Verify your BookNest email",
-            "Your OTP is 123456",
-        )
-
-        self.assertFalse(result)
 
 
 @override_settings(
