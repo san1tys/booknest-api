@@ -118,7 +118,7 @@ class RoomViewSet(ViewSet):
         methods=["put"],
         url_path="update",
         url_name="update",
-        permission_classes=[IsOwner],
+        permission_classes=[IsAuthenticated, IsOwner],
     )
     def update_room(
         self,
@@ -142,11 +142,7 @@ class RoomViewSet(ViewSet):
                 {"detail": _("Room not found.")}, status=HTTP_404_NOT_FOUND
             )
 
-        if room.hotel.owner_id != request.user.id:
-            return DRFResponse(
-                {"detail": _("You do not have permission to edit this room.")},
-                status=HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, room)
 
         serializer: RoomCreateUpdateSerializer = RoomCreateUpdateSerializer(
             room, data=request.data
@@ -308,7 +304,7 @@ class RoomViewSet(ViewSet):
         methods=["delete"],
         url_path="delete",
         url_name="delete",
-        permission_classes=[IsOwner],
+        permission_classes=[IsAuthenticated, IsOwner],
     )
     def delete_room(
         self,
@@ -332,11 +328,7 @@ class RoomViewSet(ViewSet):
                 {"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND
             )
 
-        if room.hotel.owner_id != request.user.id:
-            return DRFResponse(
-                {"detail": _("You do not have permission to delete this room.")},
-                status=HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, room)
 
         room_id = room.pk
         room.delete()
