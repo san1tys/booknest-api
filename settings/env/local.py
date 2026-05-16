@@ -1,10 +1,14 @@
 # Project modules
-from decouple import config
+from decouple import Csv, config
 
 from settings.base import *
 
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1,0.0.0.0,[::1]",
+    cast=Csv(),
+)
 USE_REDIS_IN_LOCAL = config("USE_REDIS_IN_LOCAL", default=False, cast=bool)
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]

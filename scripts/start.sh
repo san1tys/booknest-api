@@ -17,6 +17,12 @@ esac
 export BOOKNEST_ENV_ID="$APP_ENV"
 
 echo "Starting BookNest in $APP_ENV mode"
+
+if [ "$APP_ENV" = "local" ]; then
+  echo "Generating any missing migrations..."
+  python manage.py makemigrations
+fi
+
 echo "Running migrations..."
 python manage.py migrate --noinput
 
