@@ -16,6 +16,7 @@ from rest_framework.status import (
     HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.abstract.redis_storage import (
@@ -349,6 +350,46 @@ class UserViewSet(ViewSet):
             if serializer.is_valid():
                 return DRFResponse(serializer.data, status=HTTP_200_OK)
         return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        summary="Logout user",
+        description="Blacklist the provided refresh token to log the user out.",
+        responses={
+            HTTP_200_OK: DetailResponseSerializer,
+            HTTP_400_BAD_REQUEST: ErrorDetailSerializer,
+            HTTP_401_UNAUTHORIZED: ErrorDetailSerializer,
+            HTTP_429_TOO_MANY_REQUESTS: ErrorDetailSerializer,
+        },
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        url_name="logout",
+        url_path="logout",
+    )
+    def logout(
+        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+    ) -> DRFResponse:
+        """Blacklist the refresh token so it can no longer be used."""
+        refresh_token = request.data.get("refresh")
+        if not refresh_token:
+            return DRFResponse(
+                {"detail": _("Refresh token required.")},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            return DRFResponse(
+                {"detail": _("Invalid or expired token.")},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        return DRFResponse(
+            {"detail": _("Logged out successfully.")},
+            status=HTTP_200_OK,
+        )
 
     @extend_schema(
         summary="Store language preference",

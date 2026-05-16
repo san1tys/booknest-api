@@ -356,3 +356,39 @@ class UserEndpointTests(TestCase):
             self.language_url, {"language": "fr"}, format="json"
         )
         self.assertEqual(response.status_code, 400)
+
+    # --- POST /logout --------------------------------------------------------
+
+    def test_logout_blacklists_token(self) -> None:
+        """Logging out blacklists the refresh token so it cannot be reused."""
+        login_response = self.client.post(
+            self.login_url,
+            {"email": self.verified_user.email, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, 200, login_response.data)
+        refresh_token = login_response.data["refresh"]
+        access_token = login_response.data["access"]
+
+        logout_client = APIClient()
+        logout_client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+        logout_response = logout_client.post(
+            "/api/users/v1/users/logout",
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.assertEqual(logout_response.status_code, 200, logout_response.data)
+
+        refresh_response = self.client.post(
+            "/api/auth/token/refresh/",
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.assertEqual(refresh_response.status_code, 401)
+
+    def test_logout_without_token(self) -> None:
+        """POSTing logout without a refresh token returns 400."""
+        response = self.auth_client.post(
+            "/api/users/v1/users/logout", {}, format="json"
+        )
+        self.assertEqual(response.status_code, 400)
