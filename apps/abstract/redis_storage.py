@@ -53,6 +53,9 @@ def cache_delete_pattern(pattern: str) -> int:
         """Call django-redis delete_pattern when available."""
         delete_pattern = getattr(cache, "delete_pattern", None)
         if delete_pattern is None:
+            # Backends like LocMemCache do not support pattern deletes.
+            # Clearing the cache keeps cache invalidation behavior consistent.
+            cache.clear()
             return 0
         return delete_pattern(pattern)
 

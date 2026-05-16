@@ -18,7 +18,6 @@ from rest_framework.viewsets import ViewSet
 from apps.abstract.pagination import StandardPagination
 from apps.abstract.redis_storage import (
     build_cache_key,
-    cache_delete_pattern,
     cache_get,
     cache_set,
 )
@@ -164,6 +163,4 @@ class HotelReviewViewSet(ViewSet):
             hotel_id=hotel_id,
             **serializer.validated_data,
         )
-        cache_delete_pattern("reviews:hotel:list:*")
-
         return DRFResponse(ReviewListSerializer(review).data, status=HTTP_201_CREATED)

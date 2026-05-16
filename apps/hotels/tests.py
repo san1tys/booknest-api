@@ -108,6 +108,9 @@ class HotelEndpointTests(TestCase):
 
     def test_create_hotel_returns_201_for_authenticated(self) -> None:
         """Authenticated user can create a hotel and it appears in the next list."""
+        initial_list_response = self.client.get(self.list_url)
+        self.assertEqual(initial_list_response.status_code, 200)
+
         response = self.owner_client.post(
             self.create_url,
             {"name": "Brand New Hotel", "rating": 5, "city": "Almaty"},
@@ -115,7 +118,7 @@ class HotelEndpointTests(TestCase):
         )
         self.assertEqual(response.status_code, 201, response.data)
         self.assertEqual(response.data["name"], "Brand New Hotel")
-        cache.clear()
+
         list_response = self.client.get(self.list_url)
         names = [hotel["name"] for hotel in list_response.data["results"]]
         self.assertIn("Brand New Hotel", names)
@@ -138,6 +141,9 @@ class HotelEndpointTests(TestCase):
 
     def test_update_hotel_returns_200_for_owner(self) -> None:
         """Owner can update their hotel."""
+        initial_detail_response = self.client.get(self.detail_url)
+        self.assertEqual(initial_detail_response.status_code, 200)
+
         response = self.owner_client.put(
             self.update_url,
             {"name": "Renamed Hotel", "rating": 3},
@@ -146,6 +152,10 @@ class HotelEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.hotel.refresh_from_db()
         self.assertEqual(self.hotel.name, "Renamed Hotel")
+
+        detail_response = self.client.get(self.detail_url)
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertEqual(detail_response.data["name"], "Renamed Hotel")
 
     def test_update_hotel_returns_403_for_non_owner(self) -> None:
         """A different authenticated user cannot update someone else's hotel."""
@@ -165,13 +175,19 @@ class HotelEndpointTests(TestCase):
 
     def test_delete_hotel_returns_204_for_owner(self) -> None:
         """Owner can delete their hotel and the next list omits it."""
+        initial_list_response = self.client.get(self.list_url)
+        self.assertEqual(initial_list_response.status_code, 200)
+
         response = self.owner_client.delete(self.delete_url)
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Hotel.objects.filter(pk=self.hotel.pk).exists())
-        cache.clear()
+
         list_response = self.client.get(self.list_url)
         names = [hotel["name"] for hotel in list_response.data["results"]]
         self.assertNotIn(self.hotel.name, names)
+
+        detail_response = self.client.get(self.detail_url)
+        self.assertEqual(detail_response.status_code, 404)
 
     def test_delete_hotel_returns_403_for_non_owner(self) -> None:
         """A non-owner cannot delete the hotel."""

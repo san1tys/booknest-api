@@ -20,12 +20,14 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.decorators import (
+    find_queryset_object_by_query_pk,
+    validate_serializer_data,
+)
 from apps.abstract.pagination import StandardPagination
 from apps.abstract.permissions import IsOwner
 from apps.abstract.redis_storage import (
     build_cache_key,
-    cache_delete,
-    cache_delete_pattern,
     cache_get,
     cache_set,
 )
@@ -45,6 +47,7 @@ class HotelViewSet(ViewSet):
     """ViewSet for managing hotels."""
 
     permission_classes = [AllowAny]
+    detail_queryset = Hotel.objects.select_related("owner")
 
     @extend_schema(
         request=HotelCreateUpdateSerializer,
@@ -65,8 +68,13 @@ class HotelViewSet(ViewSet):
         url_name="create",
         permission_classes=[IsAuthenticated],
     )
+    @validate_serializer_data(HotelCreateUpdateSerializer)
     def create_hotel(
-        self, request: DRFRequest, *args: tuple[Any, ...], **kwargs: dict[str, Any]
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        serializer: HotelCreateUpdateSerializer,
+        **kwargs: dict[str, Any],
     ) -> DRFResponse:
         """
         Handle POST request to create a new hotel.
@@ -77,17 +85,8 @@ class HotelViewSet(ViewSet):
         Returns:
             DRFResponse: A response object containing the created hotel data or error details.
         """
-
-        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(
-            data=request.data
-        )
-        if serializer.is_valid():
-            hotel = serializer.save(owner=request.user)
-            cache_delete_pattern("hotels:list:*")
-            return DRFResponse(
-                HotelDetailSerializer(hotel).data, status=HTTP_201_CREATED
-            )
-        return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        hotel = serializer.save(owner=request.user)
+        return DRFResponse(HotelDetailSerializer(hotel).data, status=HTTP_201_CREATED)
 
     @extend_schema(
         request=HotelCreateUpdateSerializer,
@@ -119,44 +118,30 @@ class HotelViewSet(ViewSet):
         url_name="update",
         permission_classes=[IsAuthenticated, IsOwner],
     )
+    @find_queryset_object_by_query_pk(detail_queryset, "Hotel")
+    @validate_serializer_data(HotelCreateUpdateSerializer)
     def update_hotel(
         self,
         request: DRFRequest,
-        pk: int,
         *args: tuple[Any, ...],
+        object: Hotel,
+        serializer: HotelCreateUpdateSerializer,
         **kwargs: dict[str, Any],
     ) -> DRFResponse:
         """
         Handle PUT request to update an existing hotel.
         Args:
             request (DRFRequest): The incoming request object containing updated hotel data.
-            pk (int): The primary key of the hotel to be updated.
             args (tuple): Additional positional arguments.
             kwargs (dict): Additional keyword arguments.
         Returns:
             DRFResponse: A response object containing the updated hotel data or error details.
         """
-
-        try:
-            hotel: Hotel = Hotel.objects.get(pk=pk)
-        except Hotel.DoesNotExist:
-            return DRFResponse(
-                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
-            )
-
-        self.check_object_permissions(request, hotel)
-
-        serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(
-            hotel, data=request.data
+        self.check_object_permissions(request, object)
+        updated_hotel = serializer.save()
+        return DRFResponse(
+            HotelDetailSerializer(updated_hotel).data, status=HTTP_200_OK
         )
-        if serializer.is_valid():
-            updated_hotel: Hotel = serializer.save()
-            cache_delete(build_cache_key("hotels:detail", updated_hotel.pk))
-            cache_delete_pattern("hotels:list:*")
-            return DRFResponse(
-                HotelDetailSerializer(updated_hotel).data, status=HTTP_200_OK
-            )
-        return DRFResponse(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         responses={
@@ -183,38 +168,31 @@ class HotelViewSet(ViewSet):
         url_name="details",
         permission_classes=[AllowAny],
     )
+    @find_queryset_object_by_query_pk(detail_queryset, "Hotel")
     def hotel_details(
         self,
         request: DRFRequest,
-        pk: int,
         *args: tuple[Any, ...],
+        object: Hotel,
         **kwargs: dict[str, Any],
     ) -> DRFResponse:
         """
         Handle GET request to retrieve details of a specific hotel.
         Args:
             request (DRFRequest): The incoming request object.
-            pk (int): The primary key of the hotel to retrieve.
             args (tuple): Additional positional arguments.
             kwargs (dict): Additional keyword arguments.
         Returns:
             DRFResponse: A response object containing the hotel details or error details.
         """
-
-        cache_key = build_cache_key("hotels:detail", pk)
+        cache_key = build_cache_key("hotels:detail", object.pk)
         cached_data = cache_get(cache_key)
         if cached_data is not None:
             return DRFResponse(cached_data, status=HTTP_200_OK)
 
-        try:
-            hotel: Hotel = Hotel.objects.select_related("owner").get(pk=pk)
-            data = HotelDetailSerializer(hotel).data
-            cache_set(cache_key, data)
-            return DRFResponse(data, status=HTTP_200_OK)
-        except Hotel.DoesNotExist:
-            return DRFResponse(
-                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
-            )
+        data = HotelDetailSerializer(object).data
+        cache_set(cache_key, data)
+        return DRFResponse(data, status=HTTP_200_OK)
 
     @extend_schema(
         responses={
@@ -293,36 +271,25 @@ class HotelViewSet(ViewSet):
         url_name="delete",
         permission_classes=[IsAuthenticated, IsOwner],
     )
+    @find_queryset_object_by_query_pk(detail_queryset, "Hotel")
     def delete_hotel(
         self,
         request: DRFRequest,
-        pk: int,
         *args: tuple[Any, ...],
+        object: Hotel,
         **kwargs: dict[str, Any],
     ) -> DRFResponse:
         """
         Handle DELETE request to delete a specific hotel.
         Args:
             request (DRFRequest): The incoming request object.
-            pk (int): The primary key of the hotel to delete.
             args (tuple): Additional positional arguments.
             kwargs (dict): Additional keyword arguments.
         Returns:
             DRFResponse: A response object indicating the success or failure of the deletion.
         """
-        try:
-            hotel: Hotel = Hotel.objects.get(pk=pk)
-        except Hotel.DoesNotExist:
-            return DRFResponse(
-                {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
-            )
-
-        self.check_object_permissions(request, hotel)
-
-        hotel_id = hotel.pk
-        hotel.delete()
-        cache_delete(build_cache_key("hotels:detail", hotel_id))
-        cache_delete_pattern("hotels:list:*")
+        self.check_object_permissions(request, object)
+        object.delete()
         return DRFResponse(
             {"detail": _("Hotel deleted successfully.")},
             status=HTTP_204_NO_CONTENT,
