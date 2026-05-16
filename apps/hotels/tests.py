@@ -6,7 +6,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.hotels.models import Hotel
 from apps.users.models import User
 
-
 HOTEL_TEST_CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

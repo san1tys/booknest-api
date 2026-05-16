@@ -1,18 +1,20 @@
 from datetime import timedelta
 
+from asgiref.sync import async_to_sync
+from channels.testing.websocket import WebsocketCommunicator
 from django.core import mail
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
+from apps.bookings.consumers import BookingStatusConsumer
 from apps.bookings.models import Booking, BookingStatus
 from apps.bookings.tasks import send_today_check_in_reminders
 from apps.hotels.models import Hotel
 from apps.rooms.models import Room
 from apps.users.models import User
-
 
 BOOKING_TEST_CACHES = {
     "default": {
@@ -336,12 +338,70 @@ class BookingEndpointTests(TestCase):
 
     def test_cancel_booking_returns_404_for_missing_id(self) -> None:
         """Cancelling a non-existent booking yields 404."""
-        response = self.guest_client.post(
-            "/api/bookings/v1/bookings/999999/cancel"
-        )
+        response = self.guest_client.post("/api/bookings/v1/bookings/999999/cancel")
         self.assertEqual(response.status_code, 404)
 
     def test_cancel_booking_returns_401_for_anonymous(self) -> None:
         """Anonymous users cannot cancel bookings."""
         response = self.client.post(self.cancel_url)
         self.assertEqual(response.status_code, 401)
+
+
+class BookingStatusConsumerTests(TransactionTestCase):
+    """Tests for the BookingStatusConsumer websocket."""
+
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(
+            email="ws-user@example.com",
+            password="strongpass123",
+            is_email_verified=True,
+        )
+
+    def _connect(self, token: str) -> WebsocketCommunicator:
+        return WebsocketCommunicator(
+            BookingStatusConsumer.as_asgi(),
+            f"/ws/bookings/?token={token}",
+        )
+
+    def test_consumer_connects_and_receives_notify(self) -> None:
+        """A valid JWT connects, and group_send via notify() reaches the socket."""
+        token = str(AccessToken.for_user(self.user))
+
+        async def scenario() -> None:
+            communicator = self._connect(token)
+            connected, _ = await communicator.connect()
+            self.assertTrue(connected)
+
+            await BookingStatusConsumer.notify(
+                user_id=self.user.id,
+                booking_id=123,
+                status=BookingStatus.CANCELLED,
+            )
+
+            response = await communicator.receive_json_from()
+            self.assertEqual(
+                response,
+                {
+                    "type": "booking_status",
+                    "booking_id": 123,
+                    "status": BookingStatus.CANCELLED.value,
+                },
+            )
+
+            await communicator.disconnect()
+
+        async_to_sync(scenario)()
+
+    def test_consumer_rejects_missing_token(self) -> None:
+        """Connecting without a token closes the handshake."""
+
+        async def scenario() -> None:
+            communicator = WebsocketCommunicator(
+                BookingStatusConsumer.as_asgi(),
+                "/ws/bookings/",
+            )
+            connected, _ = await communicator.connect()
+            self.assertFalse(connected)
+            await communicator.disconnect()
+
+        async_to_sync(scenario)()

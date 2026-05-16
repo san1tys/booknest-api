@@ -13,7 +13,6 @@ from apps.users.services import (
 )
 from apps.users.tasks import send_OTP as send_email
 
-
 LOC_MEM_CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

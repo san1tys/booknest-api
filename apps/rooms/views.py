@@ -1,8 +1,8 @@
 from typing import Any
 
 from django.db.models import QuerySet
-from drf_spectacular.utils import OpenApiParameter, extend_schema
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
@@ -13,9 +13,9 @@ from rest_framework.status import (
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
-    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
 
@@ -138,7 +138,9 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": _("Room not found.")}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse(
+                {"detail": _("Room not found.")}, status=HTTP_404_NOT_FOUND
+            )
 
         if room.hotel.owner_id != request.user.id:
             return DRFResponse(
@@ -204,7 +206,9 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse(
+                {"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND
+            )
         data = RoomDetailSerializer(room).data
         cache_set(cache_key, data)
         return DRFResponse(data, status=HTTP_200_OK)
@@ -324,7 +328,9 @@ class RoomViewSet(ViewSet):
         try:
             room: Room = Room.objects.select_related("hotel", "hotel__owner").get(pk=pk)
         except Room.DoesNotExist:
-            return DRFResponse({"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND)
+            return DRFResponse(
+                {"detail": _("Room deleted successfully.")}, status=HTTP_404_NOT_FOUND
+            )
 
         if room.hotel.owner_id != request.user.id:
             return DRFResponse(

@@ -15,7 +15,6 @@ from apps.abstract.redis_storage import (
     set_temporary_data,
 )
 
-
 LOC_MEM_CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

@@ -1,8 +1,8 @@
 from typing import Any
 
 from django.db.models import QuerySet
-from drf_spectacular.utils import extend_schema
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -129,7 +129,9 @@ class HotelReviewViewSet(ViewSet):
         if not _has_valid_booking_for_hotel(request.user, int(hotel_id)):
             return DRFResponse(
                 {
-                    "detail": _("You can review this hotel only after a confirmed/completed booking.")
+                    "detail": _(
+                        "You can review this hotel only after a confirmed/completed booking."
+                    )
                 },
                 status=HTTP_400_BAD_REQUEST,
             )

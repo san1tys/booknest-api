@@ -7,7 +7,6 @@ from apps.hotels.models import Hotel
 from apps.rooms.models import Room
 from apps.users.models import User
 
-
 ROOM_TEST_CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -81,9 +80,7 @@ class RoomEndpointTests(TestCase):
 
     def test_list_rooms_filters_by_hotel_query_param(self) -> None:
         """Filtering by hotel excludes rooms of other hotels."""
-        response = self.client.get(
-            self.list_url, {"hotel": self.other_hotel.pk}
-        )
+        response = self.client.get(self.list_url, {"hotel": self.other_hotel.pk})
         self.assertEqual(response.status_code, 200)
         for room in response.data:
             self.assertEqual(room["hotel"], self.other_hotel.pk)

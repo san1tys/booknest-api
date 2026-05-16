@@ -6,11 +6,11 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.abstract.models import AbstractBaseModel
 
-
 # def validate_rating(value: int):
 #     """Validator to ensure that the rating is between 1 and 5."""
 #     if value < 1 or value > 5:
 #         raise ValidationError("Rating must be between 1 and 5.")
+
 
 class Hotel(AbstractBaseModel):
     """
@@ -98,5 +98,3 @@ class Hotel(AbstractBaseModel):
 
     def __str__(self) -> str:
         return self.name
-
-

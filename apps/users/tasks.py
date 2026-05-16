@@ -4,7 +4,6 @@ from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -21,4 +20,3 @@ def send_OTP(to_email: str, subject: str, message: str) -> bool:
     )
     logger.info("OTP email send result for %s: %s", to_email, sent_count == 1)
     return sent_count == 1
-

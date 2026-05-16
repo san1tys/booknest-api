@@ -13,7 +13,6 @@ from apps.abstract.redis_storage import (
 from apps.users.models import User
 from apps.users.tasks import send_OTP as send_email
 
-
 logger = logging.getLogger(__name__)
 
 EMAIL_VERIFICATION_OTP_KEY = "email_verification_otp"

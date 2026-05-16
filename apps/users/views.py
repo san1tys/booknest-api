@@ -1,8 +1,8 @@
 from typing import Any
 
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
-from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
@@ -10,10 +10,10 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
     HTTP_401_UNAUTHORIZED,
-    HTTP_429_TOO_MANY_REQUESTS,
+    HTTP_404_NOT_FOUND,
     HTTP_405_METHOD_NOT_ALLOWED,
+    HTTP_429_TOO_MANY_REQUESTS,
 )
 from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -36,8 +36,8 @@ from apps.users.serializers import (
     ResendVerificationSerializer,
     UserLoginSerializer,
     UserLoginSuccessSerializer,
-    UserRegisterSerializer,
     UserRegisterResponseSerializer,
+    UserRegisterSerializer,
     UserSerializer,
 )
 from apps.users.services import (
@@ -140,7 +140,11 @@ class UserViewSet(ViewSet):
         if existing_user is not None and not existing_user.is_email_verified:
             dispatch_email_verification_otp(existing_user)
             return DRFResponse(
-                {"detail": _("Account exists but email is not verified. A new OTP was sent.")},
+                {
+                    "detail": _(
+                        "Account exists but email is not verified. A new OTP was sent."
+                    )
+                },
                 status=HTTP_200_OK,
             )
 
@@ -149,7 +153,9 @@ class UserViewSet(ViewSet):
             user: User = serializer.save()
             dispatch_email_verification_otp(user)
             response_data = {
-                "detail": _("Registration successful. Verify your email with the OTP that was sent."),
+                "detail": _(
+                    "Registration successful. Verify your email with the OTP that was sent."
+                ),
                 "user": UserSerializer(user).data,
             }
             return DRFResponse(response_data, status=HTTP_201_CREATED)

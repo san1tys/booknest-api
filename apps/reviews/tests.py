@@ -12,7 +12,6 @@ from apps.reviews.models import Review
 from apps.rooms.models import Room
 from apps.users.models import User
 
-
 REVIEW_TEST_CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -81,9 +80,7 @@ class ReviewEndpointTests(TestCase):
         )
 
         self.list_url = f"/api/hotels/hotels/{self.hotel.pk}/reviews/"
-        self.other_list_url = (
-            f"/api/hotels/hotels/{self.other_hotel.pk}/reviews/"
-        )
+        self.other_list_url = f"/api/hotels/hotels/{self.other_hotel.pk}/reviews/"
 
     # --- GET / ---------------------------------------------------------------
 
