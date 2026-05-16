@@ -8,6 +8,7 @@ from apps.abstract.middleware import (
     normalize_language,
 )
 from apps.abstract.redis_storage import (
+    cache_delete_pattern,
     delete_temporary_data,
     get_language_preference,
     get_temporary_data,
@@ -49,6 +50,16 @@ class RedisStorageTests(SimpleTestCase):
 
         delete_temporary_data("refresh_token", "token-jti")
         self.assertIsNone(get_temporary_data("refresh_token", "token-jti"))
+
+    def test_cache_delete_pattern_falls_back_to_cache_clear(self) -> None:
+        """Pattern deletes still invalidate data on backends without native support."""
+        cache.set("alpha", "one")
+        cache.set("beta", "two")
+
+        cache_delete_pattern("alpha*")
+
+        self.assertIsNone(cache.get("alpha"))
+        self.assertIsNone(cache.get("beta"))
 
     @override_settings(LANGUAGES=(("en-us", "English"), ("ru", "Russian")))
     def test_language_preference_middleware_stores_supported_language(self) -> None:

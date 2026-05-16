@@ -110,6 +110,10 @@ class ReviewEndpointTests(TestCase):
 
     def test_create_review_returns_201_for_user_with_confirmed_booking(self) -> None:
         """A user with a confirmed booking can create a review."""
+        initial_list_response = self.client.get(self.list_url)
+        self.assertEqual(initial_list_response.status_code, 200)
+        self.assertEqual(initial_list_response.data["count"], 0)
+
         response = self.guest_client.post(
             self.list_url, {"rating": 5, "text": "Great stay"}, format="json"
         )
@@ -117,6 +121,11 @@ class ReviewEndpointTests(TestCase):
         self.assertTrue(
             Review.objects.filter(user=self.guest, hotel=self.hotel).exists()
         )
+
+        list_response = self.client.get(self.list_url)
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual(list_response.data["count"], 1)
+        self.assertEqual(list_response.data["results"][0]["rating"], 5)
 
     def test_create_review_returns_400_without_valid_booking(self) -> None:
         """A user with no confirmed/completed booking cannot review the hotel."""
