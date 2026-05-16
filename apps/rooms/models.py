@@ -57,5 +57,9 @@ class Room(AbstractBaseModel):
         self.full_clean()
         return super().save(*args, **kwargs)
 
+    @property
+    def owner(self):
+        return self.hotel.owner
+
     def __str__(self) -> str:
         return f"{self.title} @ {self.hotel.name}"

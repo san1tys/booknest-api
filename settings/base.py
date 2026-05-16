@@ -198,14 +198,46 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "django.request": {"handlers": ["console", "error_file"], "level": "WARNING", "propagate": False},
-        "apps.users": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "apps.hotels": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "apps.bookings": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "apps.rooms": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "apps.reviews": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "celery": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "apps.users": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.hotels": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.bookings": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.rooms": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.reviews": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
     "root": {"handlers": ["console", "error_file"], "level": "WARNING"},
 }

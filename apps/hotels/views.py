@@ -20,6 +20,7 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.permissions import IsOwner
 from apps.abstract.redis_storage import (
     build_cache_key,
     cache_delete,
@@ -115,7 +116,7 @@ class HotelViewSet(ViewSet):
         methods=["put"],
         url_path="update",
         url_name="update",
-        permission_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated, IsOwner],
     )
     def update_hotel(
         self,
@@ -142,11 +143,7 @@ class HotelViewSet(ViewSet):
                 {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
             )
 
-        if hotel.owner != request.user:
-            return DRFResponse(
-                {"detail": _("You do not have permission to edit this hotel.")},
-                status=HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, hotel)
 
         serializer: HotelCreateUpdateSerializer = HotelCreateUpdateSerializer(
             hotel, data=request.data
@@ -282,7 +279,7 @@ class HotelViewSet(ViewSet):
         methods=["delete"],
         url_path="delete",
         url_name="delete",
-        permission_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated, IsOwner],
     )
     def delete_hotel(
         self,
@@ -308,11 +305,7 @@ class HotelViewSet(ViewSet):
                 {"detail": _("Hotel not found.")}, status=HTTP_404_NOT_FOUND
             )
 
-        if hotel.owner != request.user:
-            return DRFResponse(
-                {"detail": _("You do not have permission to delete this hotel.")},
-                status=HTTP_403_FORBIDDEN,
-            )
+        self.check_object_permissions(request, hotel)
 
         hotel_id = hotel.pk
         hotel.delete()

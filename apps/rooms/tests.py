@@ -191,7 +191,7 @@ class RoomEndpointTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_update_room_rejects_anonymous(self) -> None:
-        """Anonymous users cannot update rooms (rejected by the view's owner check)."""
+        """Anonymous users cannot update rooms."""
         response = self.client.put(
             self.update_url,
             {
@@ -202,7 +202,7 @@ class RoomEndpointTests(TestCase):
             },
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # --- DELETE /{id}/delete -------------------------------------------------
 
@@ -218,6 +218,34 @@ class RoomEndpointTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_delete_room_rejects_anonymous(self) -> None:
-        """Anonymous users cannot delete rooms (rejected by the view's owner check)."""
+        """Anonymous users cannot delete rooms."""
         response = self.client.delete(self.delete_url)
+        self.assertEqual(response.status_code, 401)
+
+    # --- IsOwner permission coverage -----------------------------------------
+
+    def test_non_owner_cannot_delete_room(self) -> None:
+        response = self.intruder_client.delete(self.delete_url)
         self.assertEqual(response.status_code, 403)
+        self.assertTrue(Room.objects.filter(pk=self.room.pk).exists())
+
+    def test_non_owner_cannot_update_room(self) -> None:
+        response = self.intruder_client.put(
+            self.update_url,
+            {
+                "hotel": self.hotel.pk,
+                "title": "Hijacked",
+                "price_per_night": "100.00",
+                "capacity": 2,
+                "quantity": 1,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.room.refresh_from_db()
+        self.assertNotEqual(self.room.title, "Hijacked")
+
+    def test_owner_can_delete_room(self) -> None:
+        response = self.owner_client.delete(self.delete_url)
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Room.objects.filter(pk=self.room.pk).exists())
