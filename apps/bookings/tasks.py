@@ -2,11 +2,12 @@ import logging
 from collections import defaultdict
 from datetime import date
 
+from asgiref.sync import async_to_sync
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import send_mail
 from django.utils import timezone
 
+from apps.abstract.async_io import AsyncOperationError, send_mail_async
 from apps.bookings.models import Booking, BookingStatus
 from apps.users.models import User
 
@@ -68,13 +69,19 @@ def send_today_check_in_reminders(target_date_iso: str | None = None) -> int:
             len(user_bookings),
             reminder_date,
         )
-        sent_count = send_mail(
-            subject="BookNest check-in reminder",
-            message=build_check_in_reminder_message(user, user_bookings),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
+        try:
+            sent_count = async_to_sync(send_mail_async)(
+                subject="BookNest check-in reminder",
+                message=build_check_in_reminder_message(user, user_bookings),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                timeout=settings.EMAIL_TIMEOUT,
+                operation_name=f"check_in_reminder:{user.email}",
+            )
+        except AsyncOperationError:
+            logger.exception("Failed to send check-in reminder to %s", user.email)
+            continue
+
         if sent_count == 1:
             reminders_sent += 1
 
