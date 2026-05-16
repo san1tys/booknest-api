@@ -1,14 +1,12 @@
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, TypeVar
+from typing import Any
 
 from django.db.models import Manager, Model, QuerySet
 from rest_framework.request import Request as DRFRequest
 from rest_framework.response import Response as DRFResponse
 from rest_framework.serializers import Serializer
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-
-T = TypeVar("T", bound=Model)
 
 
 def validate_serializer_data(
@@ -64,7 +62,7 @@ def validate_serializer_data(
     return decorator
 
 
-def find_queryset_object_by_query_pk(
+def find_queryset_object_by_query_pk[T: Model](
     queryset: QuerySet[T] | Manager[T],
     entity_name: str,
 ) -> Callable[..., Callable[..., DRFResponse]]:

@@ -527,7 +527,10 @@ def endpoint_case_map(api_state: dict[str, Any]) -> dict[str, dict[str, Endpoint
                 "post",
                 urls["users_login"],
                 200,
-                data={"email": users["verified"].email, "password": api_state["password"]},
+                data={
+                    "email": users["verified"].email,
+                    "password": api_state["password"],
+                },
                 format="json",
                 expected_keys=("email", "access", "refresh"),
                 post_assert=assert_login,
@@ -545,7 +548,10 @@ def endpoint_case_map(api_state: dict[str, Any]) -> dict[str, dict[str, Endpoint
                 "post",
                 urls["users_login"],
                 405,
-                data={"email": users["verified"].email, "password": api_state["password"]},
+                data={
+                    "email": users["verified"].email,
+                    "password": api_state["password"],
+                },
                 format="json",
             ),
         },
