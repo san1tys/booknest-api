@@ -107,6 +107,7 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="", cast=str)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
 EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
+ASYNC_IO_TIMEOUT_SECONDS = config("ASYNC_IO_TIMEOUT_SECONDS", default=10, cast=int)
 
 EMAIL_VERIFICATION_OTP_LENGTH = config(
     "EMAIL_VERIFICATION_OTP_LENGTH",

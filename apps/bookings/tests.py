@@ -1,4 +1,6 @@
+import asyncio
 from datetime import timedelta
+from unittest.mock import patch
 
 from asgiref.sync import async_to_sync
 from channels.testing.websocket import WebsocketCommunicator
@@ -9,6 +11,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
+from apps.abstract.async_io import AsyncOperationError
 from apps.bookings.consumers import BookingStatusConsumer
 from apps.bookings.models import Booking, BookingStatus
 from apps.bookings.tasks import send_today_check_in_reminders
@@ -118,6 +121,30 @@ class BookingReminderTaskTests(TestCase):
 
         self.assertEqual(sent_count, 0)
         self.assertEqual(len(mail.outbox), 0)
+
+    @patch("apps.bookings.tasks.send_mail_async")
+    def test_send_today_check_in_reminders_handles_async_delivery_failure(
+        self, mocked_send_mail_async
+    ) -> None:
+        """Reminder task continues and returns only successfully sent emails."""
+
+        async def failing_send_mail_async(**kwargs) -> int:
+            raise AsyncOperationError("smtp failure")
+
+        mocked_send_mail_async.side_effect = failing_send_mail_async
+        today = timezone.localdate()
+        Booking.objects.create(
+            user=self.user,
+            room=self.room,
+            check_in=today,
+            check_out=today + timedelta(days=1),
+            status=BookingStatus.PENDING,
+            total_price="150.00",
+        )
+
+        sent_count = send_today_check_in_reminders()
+
+        self.assertEqual(sent_count, 0)
 
 
 @override_settings(
@@ -372,11 +399,12 @@ class BookingStatusConsumerTests(TransactionTestCase):
             connected, _ = await communicator.connect()
             self.assertTrue(connected)
 
-            await BookingStatusConsumer.notify(
+            sent = await BookingStatusConsumer.notify(
                 user_id=self.user.id,
                 booking_id=123,
                 status=BookingStatus.CANCELLED,
             )
+            self.assertTrue(sent)
 
             response = await communicator.receive_json_from()
             self.assertEqual(
@@ -389,6 +417,30 @@ class BookingStatusConsumerTests(TransactionTestCase):
             )
 
             await communicator.disconnect()
+
+        async_to_sync(scenario)()
+
+    @override_settings(ASYNC_IO_TIMEOUT_SECONDS=0.001)
+    @patch("apps.bookings.consumers.get_channel_layer")
+    def test_notify_returns_false_when_channel_send_times_out(
+        self, mocked_get_channel_layer
+    ) -> None:
+        """Timed-out websocket notifications fail without raising to callers."""
+
+        class SlowChannelLayer:
+            async def group_send(self, group_name: str, message: dict) -> None:
+                await asyncio.sleep(0.05)
+
+        mocked_get_channel_layer.return_value = SlowChannelLayer()
+
+        async def scenario() -> None:
+            sent = await BookingStatusConsumer.notify(
+                user_id=self.user.id,
+                booking_id=123,
+                status=BookingStatus.CANCELLED,
+            )
+
+            self.assertFalse(sent)
 
         async_to_sync(scenario)()
 
