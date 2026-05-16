@@ -4,6 +4,7 @@ from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import User
 from apps.users.services import (
@@ -21,9 +22,23 @@ LOC_MEM_CACHES = {
 }
 
 
+USER_ENDPOINT_CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "users-endpoint-tests",
+    }
+}
+
+
+def _bearer_token(user: User) -> str:
+    """Mint an access token for the given user."""
+    return str(RefreshToken.for_user(user).access_token)
+
+
 @override_settings(
     CACHES=LOC_MEM_CACHES,
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    LANGUAGE_CODE="en",
 )
 class UserOtpFlowTests(TestCase):
     """Tests for registration and email verification OTP flow."""
@@ -125,3 +140,220 @@ class UserOtpFlowTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["reader@example.com"])
         self.assertEqual(mail.outbox[0].subject, "Verify your BookNest email")
+
+
+@override_settings(
+    CACHES=USER_ENDPOINT_CACHES,
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+)
+class UserEndpointTests(TestCase):
+    """Endpoint tests for the user viewset (me, register, verify, resend, login, language)."""
+
+    def setUp(self) -> None:
+        """Build a verified and unverified user plus authed/anonymous clients."""
+        cache.clear()
+        self.password = "strongpass123"
+        self.verified_user = User.objects.create_user(
+            email="verified@example.com",
+            password=self.password,
+            first_name="Ada",
+            last_name="Reader",
+            is_email_verified=True,
+        )
+        self.unverified_user = User.objects.create_user(
+            email="unverified@example.com",
+            password=self.password,
+            first_name="Unverified",
+        )
+
+        self.client = APIClient()
+        self.auth_client = APIClient()
+        self.auth_client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.verified_user)}"
+        )
+
+        self.me_url = "/api/users/v1/users/me"
+        self.register_url = "/api/users/v1/users/register"
+        self.verify_url = "/api/users/v1/users/verify-email"
+        self.resend_url = "/api/users/v1/users/resend-verification"
+        self.login_url = "/api/users/v1/users/login"
+        self.language_url = "/api/users/v1/users/language"
+
+    # --- GET /me -------------------------------------------------------------
+
+    def test_me_returns_200_with_user_data(self) -> None:
+        """Authenticated user receives their profile data."""
+        response = self.auth_client.get(self.me_url)
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["email"], self.verified_user.email)
+        self.assertTrue(response.data["is_email_verified"])
+
+    def test_me_returns_401_for_anonymous(self) -> None:
+        """Anonymous request to /me is rejected."""
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_me_does_not_leak_password_hash(self) -> None:
+        """The /me response must not expose the password field."""
+        response = self.auth_client.get(self.me_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("password", response.data)
+
+    # --- POST /register ------------------------------------------------------
+
+    @patch("apps.users.services.send_email.delay")
+    def test_register_creates_unverified_user(self, mocked_delay) -> None:
+        """Valid registration creates a new unverified user and queues an OTP email."""
+        response = self.client.post(
+            self.register_url,
+            {
+                "email": "newcomer@example.com",
+                "password": self.password,
+                "first_name": "New",
+                "last_name": "Comer",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        user = User.objects.get(email="newcomer@example.com")
+        self.assertFalse(user.is_email_verified)
+        mocked_delay.assert_called_once()
+
+    def test_register_returns_400_when_email_missing(self) -> None:
+        """Registration without an email returns a 400 validation error."""
+        response = self.client.post(
+            self.register_url,
+            {"password": self.password, "first_name": "NoEmail"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("email", response.data)
+
+    def test_register_returns_400_when_password_too_short(self) -> None:
+        """Password shorter than six characters is rejected."""
+        response = self.client.post(
+            self.register_url,
+            {"email": "shortpw@example.com", "password": "abc"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("password", response.data)
+
+    # --- POST /verify-email --------------------------------------------------
+
+    def test_verify_email_returns_200_with_valid_otp(self) -> None:
+        """A correct OTP marks the user as verified."""
+        set_email_verification_otp(self.unverified_user.email, "654321")
+        response = self.client.post(
+            self.verify_url,
+            {"email": self.unverified_user.email, "otp": "654321"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.unverified_user.refresh_from_db()
+        self.assertTrue(self.unverified_user.is_email_verified)
+
+    def test_verify_email_returns_400_for_invalid_otp(self) -> None:
+        """A wrong OTP yields a 400 response."""
+        set_email_verification_otp(self.unverified_user.email, "111111")
+        response = self.client.post(
+            self.verify_url,
+            {"email": self.unverified_user.email, "otp": "999999"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_verify_email_returns_404_for_unknown_email(self) -> None:
+        """An unknown email returns 404."""
+        response = self.client.post(
+            self.verify_url,
+            {"email": "missing@example.com", "otp": "123456"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    # --- POST /resend-verification -------------------------------------------
+
+    @patch("apps.users.services.send_email.delay")
+    def test_resend_verification_returns_200(self, mocked_delay) -> None:
+        """Unverified users can request a fresh OTP."""
+        response = self.client.post(
+            self.resend_url,
+            {"email": self.unverified_user.email},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        mocked_delay.assert_called_once()
+
+    def test_resend_verification_returns_400_for_already_verified(self) -> None:
+        """Already-verified users get a 400 response."""
+        response = self.client.post(
+            self.resend_url,
+            {"email": self.verified_user.email},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_resend_verification_returns_404_for_unknown_email(self) -> None:
+        """Unknown emails yield 404."""
+        response = self.client.post(
+            self.resend_url,
+            {"email": "ghost@example.com"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    # --- POST /login ---------------------------------------------------------
+
+    def test_login_returns_tokens_for_verified_user(self) -> None:
+        """A verified user can log in and receive JWT tokens."""
+        response = self.client.post(
+            self.login_url,
+            {"email": self.verified_user.email, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_login_returns_401_for_wrong_password(self) -> None:
+        """Invalid password is rejected with 401."""
+        response = self.client.post(
+            self.login_url,
+            {"email": self.verified_user.email, "password": "wrong-pass"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_login_returns_401_for_unverified_user(self) -> None:
+        """Unverified users cannot log in even with the right password."""
+        response = self.client.post(
+            self.login_url,
+            {"email": self.unverified_user.email, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    # --- POST /language ------------------------------------------------------
+
+    def test_language_set_returns_200_for_valid_choice(self) -> None:
+        """A valid language is accepted and echoed back."""
+        response = self.auth_client.post(
+            self.language_url, {"language": "en"}, format="json"
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["language"], "en")
+
+    def test_language_returns_401_for_anonymous(self) -> None:
+        """Anonymous users cannot set language preference."""
+        response = self.client.post(
+            self.language_url, {"language": "en"}, format="json"
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_language_returns_400_for_invalid_choice(self) -> None:
+        """An unsupported language is rejected with 400."""
+        response = self.auth_client.post(
+            self.language_url, {"language": "fr"}, format="json"
+        )
+        self.assertEqual(response.status_code, 400)
