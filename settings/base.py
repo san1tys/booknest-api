@@ -1,5 +1,6 @@
 # Python modules
 import os
+from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
 
@@ -155,3 +156,56 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ----------------------------------------------
+# Logging
+#
+LOGS_DIR = Path(BASE_DIR) / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOGS_DIR / "booknest.log"),
+            "maxBytes": 1024 * 1024 * 10,
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOGS_DIR / "booknest_errors.log"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 3,
+            "formatter": "verbose",
+            "level": "ERROR",
+        },
+    },
+    "loggers": {
+        "django": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["console", "error_file"], "level": "WARNING", "propagate": False},
+        "apps.users": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "apps.hotels": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "apps.bookings": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "apps.rooms": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "apps.reviews": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "celery": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+    },
+    "root": {"handlers": ["console", "error_file"], "level": "WARNING"},
+}

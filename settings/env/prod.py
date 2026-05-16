@@ -16,3 +16,5 @@ DATABASES = {
         "PORT": config("POSTGRES_PORT", default=5432, cast=int),
     },
 }
+
+LOGGING["handlers"]["file"]["level"] = "WARNING"  # noqa: F405
