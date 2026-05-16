@@ -82,9 +82,6 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = config("TIME_ZONE", default="UTC", cast=str)
 
-# CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL, cast=str)
-# CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL, cast=str)
-
 RATE_LIMIT_ANON = config("RATE_LIMIT_ANON", default="100/hour", cast=str)
 RATE_LIMIT_USER = config("RATE_LIMIT_USER", default="1000/hour", cast=str)
 RATE_LIMIT_AUTH = config("RATE_LIMIT_AUTH", default="10/minute", cast=str)
@@ -119,7 +116,7 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="", cast=str)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
 EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
-ASYNC_IO_TIMEOUT_SECONDS = config("ASYNC_IO_TIMEOUT_SECONDS", default=10, cast=int)
+ASYNC_IO_TIMEOUT_SECONDS = config("ASYNC_IO_TIMEOUT_SECONDS", default=10, cast=float)
 
 EMAIL_VERIFICATION_OTP_LENGTH = config(
     "EMAIL_VERIFICATION_OTP_LENGTH",
@@ -197,23 +194,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
-
-# ----------------------------------------------
-# Shell plus configuration (Django extensions)
-#
-SHELL_PLUS_PRE_IMPORTS = [
-    ("django.db", ("connection", "reset_queries", "connections")),
-    ("datetime", ("datetime", "timedelta", "date")),
-    ("json", ("loads", "dumps")),
-]
-SHELL_PLUS_MODEL_ALIASES = {
-    "auths": {
-        "CustomUser": "U",
-    },
-}
-SHELL_PLUS = "ipython"
-SHELL_PLUS_PRINT_SQL = True
-SHELL_PLUS_PRINT_SQL_TRUNCATE = 1000
 
 # ----------------------------------------------
 # DRF Spectacular

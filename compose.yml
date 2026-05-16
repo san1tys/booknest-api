@@ -27,6 +27,52 @@ services:
         condition: service_healthy
     command: ["/bin/sh", "/app/scripts/start.sh"]
 
+  celery_worker:
+    build:
+      context: .
+      args:
+        APP_ENV: ${BOOKNEST_ENV_ID:-local}
+    volumes:
+      - .:/app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BOOKNEST_ENV_ID: ${BOOKNEST_ENV_ID:-local}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "settings.celery", "worker", "--loglevel=info", "--concurrency=2"]
+
+  celery_beat:
+    build:
+      context: .
+      args:
+        APP_ENV: ${BOOKNEST_ENV_ID:-local}
+    volumes:
+      - .:/app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BOOKNEST_ENV_ID: ${BOOKNEST_ENV_ID:-local}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "settings.celery", "beat", "--loglevel=info"]
+
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
