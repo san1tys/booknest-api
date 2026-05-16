@@ -19,6 +19,7 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.pagination import StandardPagination
 from apps.abstract.permissions import IsOwner
 from apps.abstract.redis_storage import (
     build_cache_key,
@@ -219,6 +220,12 @@ class RoomViewSet(ViewSet):
             "capacity_gte, search, ordering."
         ),
         summary="List Rooms",
+        parameters=[
+            OpenApiParameter("page", int, description="Page number"),
+            OpenApiParameter(
+                "page_size", int, description="Results per page (max 100)"
+            ),
+        ],
     )
     @action(
         detail=False,
@@ -275,10 +282,15 @@ class RoomViewSet(ViewSet):
         }
         if ordering in allowed_ordering:
             qs = qs.order_by(ordering)
+        else:
+            qs = qs.order_by("pk")
 
-        data: list[dict] = RoomDetailSerializer(qs, many=True).data
-        cache_set(cache_key, data)
-        return DRFResponse(data, status=HTTP_200_OK)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        serializer: RoomDetailSerializer = RoomDetailSerializer(page, many=True)
+        response: DRFResponse = paginator.get_paginated_response(serializer.data)
+        cache_set(cache_key, response.data)
+        return response
 
     @extend_schema(
         responses={

@@ -75,14 +75,14 @@ class RoomEndpointTests(TestCase):
         """Anyone can list rooms."""
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, 200)
-        titles = [room["title"] for room in response.data]
+        titles = [room["title"] for room in response.data["results"]]
         self.assertIn(self.room.title, titles)
 
     def test_list_rooms_filters_by_hotel_query_param(self) -> None:
         """Filtering by hotel excludes rooms of other hotels."""
         response = self.client.get(self.list_url, {"hotel": self.other_hotel.pk})
         self.assertEqual(response.status_code, 200)
-        for room in response.data:
+        for room in response.data["results"]:
             self.assertEqual(room["hotel"], self.other_hotel.pk)
 
     def test_list_rooms_post_not_allowed(self) -> None:
@@ -126,7 +126,7 @@ class RoomEndpointTests(TestCase):
         self.assertEqual(response.status_code, 201, response.data)
         cache.clear()
         list_response = self.client.get(self.list_url)
-        titles = [room["title"] for room in list_response.data]
+        titles = [room["title"] for room in list_response.data["results"]]
         self.assertIn("Suite", titles)
 
     def test_create_room_returns_403_when_not_hotel_owner(self) -> None:

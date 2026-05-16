@@ -69,7 +69,7 @@ class HotelEndpointTests(TestCase):
         """Anyone can list hotels and the seeded hotel appears."""
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, 200)
-        names = [hotel["name"] for hotel in response.data]
+        names = [hotel["name"] for hotel in response.data["results"]]
         self.assertIn(self.hotel.name, names)
 
     def test_list_hotels_empty_when_none_exist(self) -> None:
@@ -78,7 +78,8 @@ class HotelEndpointTests(TestCase):
         cache.clear()
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.data), [])
+        self.assertEqual(response.data["results"], [])
+        self.assertEqual(response.data["count"], 0)
 
     def test_list_hotels_post_not_allowed(self) -> None:
         """POST to the list URL is not allowed."""
@@ -116,7 +117,7 @@ class HotelEndpointTests(TestCase):
         self.assertEqual(response.data["name"], "Brand New Hotel")
         cache.clear()
         list_response = self.client.get(self.list_url)
-        names = [hotel["name"] for hotel in list_response.data]
+        names = [hotel["name"] for hotel in list_response.data["results"]]
         self.assertIn("Brand New Hotel", names)
 
     def test_create_hotel_returns_401_for_anonymous(self) -> None:
@@ -169,7 +170,7 @@ class HotelEndpointTests(TestCase):
         self.assertFalse(Hotel.objects.filter(pk=self.hotel.pk).exists())
         cache.clear()
         list_response = self.client.get(self.list_url)
-        names = [hotel["name"] for hotel in list_response.data]
+        names = [hotel["name"] for hotel in list_response.data["results"]]
         self.assertNotIn(self.hotel.name, names)
 
     def test_delete_hotel_returns_403_for_non_owner(self) -> None:
@@ -181,3 +182,25 @@ class HotelEndpointTests(TestCase):
         """Anonymous users cannot delete hotels."""
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, 401)
+
+    # --- Pagination ----------------------------------------------------------
+
+    def test_hotel_list_is_paginated(self) -> None:
+        """List endpoint paginates with count/next/results and a 20-item page."""
+        Hotel.objects.all().delete()
+        cache.clear()
+        for index in range(25):
+            Hotel.objects.create(
+                name=f"Paginated Hotel {index:02d}",
+                owner=self.owner,
+                rating=4,
+                city="Almaty",
+            )
+
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("results", response.data)
+        self.assertEqual(response.data["count"], 25)
+        self.assertEqual(len(response.data["results"]), 20)

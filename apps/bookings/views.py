@@ -19,6 +19,7 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.pagination import StandardPagination
 from apps.abstract.serializers import ErrorDetailSerializer, ValidationErrorSerializer
 from apps.bookings.consumers import BookingStatusConsumer
 from apps.bookings.models import Booking, BookingStatus
@@ -101,6 +102,12 @@ class BookingViewSet(ViewSet):
         },
         description="List all bookings for the authenticated user. The user must be authenticated to access this endpoint. The response will include a list of bookings with details such as room information, check-in and check-out dates, status, and total price.",
         summary="List user bookings",
+        parameters=[
+            OpenApiParameter("page", int, description="Page number"),
+            OpenApiParameter(
+                "page_size", int, description="Results per page (max 100)"
+            ),
+        ],
     )
     @action(
         detail=False,
@@ -135,8 +142,10 @@ class BookingViewSet(ViewSet):
         else:
             queryset = queryset.filter(user=user)
 
-        serializer = BookingListSerializer(queryset, many=True)
-        return DRFResponse(serializer.data, status=HTTP_200_OK)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = BookingListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
         parameters=[

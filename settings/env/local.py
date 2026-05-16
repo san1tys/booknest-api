@@ -7,6 +7,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 USE_REDIS_IN_LOCAL = config("USE_REDIS_IN_LOCAL", default=False, cast=bool)
 
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

@@ -20,6 +20,7 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ViewSet
 
+from apps.abstract.pagination import StandardPagination
 from apps.abstract.permissions import IsOwner
 from apps.abstract.redis_storage import (
     build_cache_key,
@@ -223,6 +224,12 @@ class HotelViewSet(ViewSet):
         },
         description="Retrieve a list of all hotels.",
         summary="List Hotels",
+        parameters=[
+            OpenApiParameter("page", int, description="Page number"),
+            OpenApiParameter(
+                "page_size", int, description="Results per page (max 100)"
+            ),
+        ],
     )
     @action(
         detail=False,
@@ -241,7 +248,7 @@ class HotelViewSet(ViewSet):
             args (tuple): Additional positional arguments.
             kwargs (dict): Additional keyword arguments.
         Returns:
-            DRFResponse: A response object containing a list of hotels.
+            DRFResponse: A response object containing a paginated list of hotels.
         """
 
         cache_key = build_cache_key("hotels:list", request.get_full_path())
@@ -249,10 +256,15 @@ class HotelViewSet(ViewSet):
         if cached_data is not None:
             return DRFResponse(cached_data, status=HTTP_200_OK)
 
-        hotels: QuerySet[Hotel] = Hotel.objects.select_related("owner").all()
-        serializer: HotelDetailSerializer = HotelDetailSerializer(hotels, many=True)
-        cache_set(cache_key, serializer.data)
-        return DRFResponse(serializer.data, status=HTTP_200_OK)
+        hotels: QuerySet[Hotel] = (
+            Hotel.objects.select_related("owner").all().order_by("pk")
+        )
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(hotels, request, view=self)
+        serializer: HotelDetailSerializer = HotelDetailSerializer(page, many=True)
+        response: DRFResponse = paginator.get_paginated_response(serializer.data)
+        cache_set(cache_key, response.data)
+        return response
 
     @extend_schema(
         responses={
