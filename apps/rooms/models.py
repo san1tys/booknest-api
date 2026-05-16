@@ -8,6 +8,8 @@ from apps.abstract.models import AbstractBaseModel
 
 
 class Room(AbstractBaseModel):
+    """Model representing a room type that belongs to a hotel."""
+
     TITLE_MAX_LENGTH = 255
 
     hotel = models.ForeignKey(
@@ -39,12 +41,15 @@ class Room(AbstractBaseModel):
     )
 
     class Meta:
+        """Metadata for room persistence and ordering."""
+
         ordering = ["-created_at"]
         db_table = "hotels_room"
         verbose_name = _("Room")
         verbose_name_plural = _("Rooms")
 
     def clean(self) -> None:
+        """Validate positive price, capacity, and quantity values."""
         if self.price_per_night is not None and self.price_per_night <= 0:
             raise ValidationError(_("Price per night must be positive."))
         if self.capacity is not None and self.capacity <= 0:
@@ -54,12 +59,15 @@ class Room(AbstractBaseModel):
         return super().clean()
 
     def save(self, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> None:
+        """Validate the room before saving it."""
         self.full_clean()
         return super().save(*args, **kwargs)
 
     @property
-    def owner(self):
+    def owner(self) -> Any:
+        """Return the owner of the parent hotel for permission checks."""
         return self.hotel.owner
 
     def __str__(self) -> str:
+        """Return a readable room label for admin and logs."""
         return f"{self.title} @ {self.hotel.name}"

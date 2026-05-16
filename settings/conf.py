@@ -20,22 +20,6 @@ ENV_POSSIBLE_OPTIONS = (
 ENV_ID = config("BOOKNEST_ENV_ID", default="local", cast=str)
 SECRET_KEY = config("SECRET_KEY", cast=str)
 
-UNFOLD = {
-    "SITE_HEADER": "Booknest admin panel",
-    "SITE_TITLE": "Booknest dashboards",
-    "SITE_SUBTITLE": "User management",
-    "THEME": "dark",
-    "SHOW_THEME_TOGGLE": True,
-    "DASHBOARD_CALLBACK": "settings.unfold_dashboard.dashboard_callback",
-    "COLOR_PALETTE": {
-        "primary": "#10b981",
-        "accent": "#f97316",
-        "background": "#111827",
-        "foreground": "#f3f4f6",
-        "muted": "#6b7280",
-    },
-}
-
 # ----------------------------------------------
 # Redis | Cache | Temporary Data
 #

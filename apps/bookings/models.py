@@ -17,6 +17,8 @@ class BookingStatus(models.TextChoices):
 
 
 class Booking(AbstractBaseModel):
+    """Model representing a user's reservation for a room."""
+
     STATUS_MAX_LENGTH = 20
 
     user = models.ForeignKey(
@@ -60,20 +62,25 @@ class Booking(AbstractBaseModel):
     )
 
     class Meta:
+        """Metadata for booking ordering and verbose names."""
+
         ordering = ["-created_at"]
         verbose_name = _("Booking")
         verbose_name_plural = _("Bookings")
 
     def clean(self) -> None:
+        """Validate that check-out occurs after check-in."""
         if self.check_in and self.check_out and self.check_out <= self.check_in:
             raise ValidationError(_("Check-out date must be after check-in date."))
         return super().clean()
 
     def save(self, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> None:
+        """Validate the booking before saving it."""
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
+        """Return a readable booking label for admin and logs."""
         return (
             f"Booking {self.id} by {self.user} "
             f"for {self.room} from {self.check_in} to {self.check_out}"

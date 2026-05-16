@@ -15,10 +15,3 @@ assert (
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"settings.env.{ENV_ID}")
 
 application = get_wsgi_application()
-
-# def application(environ, start_response):
-#     """WSGI application callable."""
-
-#     # environ is a dictionary containing CGI-style environment variables
-#     # environ["REQUEST_METHOD"] = "GET"
-#     # start_response is a callable that starts the HTTP response

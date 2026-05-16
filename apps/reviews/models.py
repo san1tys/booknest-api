@@ -6,6 +6,8 @@ from apps.abstract.models import AbstractBaseModel
 
 
 class Review(AbstractBaseModel):
+    """Model representing one user's review for a hotel."""
+
     user = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
@@ -25,6 +27,8 @@ class Review(AbstractBaseModel):
     text = models.TextField(blank=True, verbose_name=_("Review text"))
 
     class Meta:
+        """Metadata for uniqueness, ordering, and database naming."""
+
         unique_together = ("user", "hotel")
         ordering = ("-created_at",)
         db_table = "hotels_review"
@@ -32,4 +36,5 @@ class Review(AbstractBaseModel):
         verbose_name_plural = _("Reviews")
 
     def __str__(self) -> str:
+        """Return a readable review label for admin and logs."""
         return f"Review({self.user.email} -> {self.hotel.name}, {self.rating})"

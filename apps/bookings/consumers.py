@@ -20,9 +20,11 @@ class BookingStatusConsumer(AsyncWebsocketConsumer):
 
     @classmethod
     def _group_name(cls, user_id: int | str) -> str:
+        """Build the channel-layer group name for a user."""
         return f"{cls.GROUP_PREFIX}{user_id}"
 
     async def connect(self) -> None:
+        """Authenticate the websocket via JWT and join the user's group."""
         token = self._extract_token(self.scope.get("query_string", b""))
         if token is None:
             logger.warning("Rejected booking websocket connection without token")
@@ -69,6 +71,7 @@ class BookingStatusConsumer(AsyncWebsocketConsumer):
         logger.info("Accepted booking websocket for user %s", user_id)
 
     async def disconnect(self, code: int) -> None:
+        """Leave the user's group when the websocket disconnects."""
         group_name = getattr(self, "group_name", None)
         if group_name:
             try:
@@ -90,6 +93,7 @@ class BookingStatusConsumer(AsyncWebsocketConsumer):
     async def receive(
         self, text_data: str | None = None, bytes_data: bytes | None = None
     ) -> None:
+        """Respond to lightweight websocket control messages like ping."""
         if not text_data:
             return
         try:
@@ -101,6 +105,7 @@ class BookingStatusConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"type": "pong"}))
 
     async def booking_status(self, event: dict[str, Any]) -> None:
+        """Send a booking status event to the connected websocket client."""
         logger.info(
             "Sending booking status websocket event for booking %s",
             event["booking_id"],
@@ -160,6 +165,7 @@ class BookingStatusConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     def _extract_token(query_string: bytes) -> str | None:
+        """Extract the first `token` query param from the websocket URL."""
         try:
             decoded = query_string.decode("utf-8")
         except UnicodeDecodeError:

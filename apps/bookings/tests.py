@@ -1,14 +1,16 @@
+from unittest import skipUnless
+
 from datetime import timedelta
 
 from asgiref.sync import async_to_sync
-from channels.testing.websocket import WebsocketCommunicator
 from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
+from apps.abstract.testing import bearer_token, build_locmem_caches
 from apps.bookings.consumers import BookingStatusConsumer
 from apps.bookings.models import Booking, BookingStatus
 from apps.bookings.tasks import send_today_check_in_reminders
@@ -16,17 +18,12 @@ from apps.hotels.models import Hotel
 from apps.rooms.models import Room
 from apps.users.models import User
 
-BOOKING_TEST_CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "bookings-endpoint-tests",
-    }
-}
+try:
+    from channels.testing.websocket import WebsocketCommunicator
+except ImportError:
+    WebsocketCommunicator = None
 
-
-def _bearer_token(user: User) -> str:
-    """Mint an access token for the given user."""
-    return str(RefreshToken.for_user(user).access_token)
+BOOKING_TEST_CACHES = build_locmem_caches("bookings-endpoint-tests")
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
@@ -172,15 +169,15 @@ class BookingEndpointTests(TestCase):
         self.client = APIClient()
         self.guest_client = APIClient()
         self.guest_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.guest)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.guest)}"
         )
         self.other_client = APIClient()
         self.other_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.other_guest)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.other_guest)}"
         )
         self.owner_client = APIClient()
         self.owner_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {_bearer_token(self.hotel_owner)}"
+            HTTP_AUTHORIZATION=f"Bearer {bearer_token(self.hotel_owner)}"
         )
 
         self.list_url = "/api/bookings/v1/bookings/list"
@@ -347,10 +344,15 @@ class BookingEndpointTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+@skipUnless(
+    WebsocketCommunicator is not None,
+    "channels websocket test dependencies are not installed",
+)
 class BookingStatusConsumerTests(TransactionTestCase):
     """Tests for the BookingStatusConsumer websocket."""
 
     def setUp(self) -> None:
+        """Create a verified user used by websocket authentication tests."""
         self.user = User.objects.create_user(
             email="ws-user@example.com",
             password="strongpass123",
@@ -358,6 +360,7 @@ class BookingStatusConsumerTests(TransactionTestCase):
         )
 
     def _connect(self, token: str) -> WebsocketCommunicator:
+        """Build a websocket communicator for the booking status route."""
         return WebsocketCommunicator(
             BookingStatusConsumer.as_asgi(),
             f"/ws/bookings/?token={token}",
@@ -368,6 +371,7 @@ class BookingStatusConsumerTests(TransactionTestCase):
         token = str(AccessToken.for_user(self.user))
 
         async def scenario() -> None:
+            """Connect, notify the group, and assert the socket payload."""
             communicator = self._connect(token)
             connected, _ = await communicator.connect()
             self.assertTrue(connected)
@@ -396,6 +400,7 @@ class BookingStatusConsumerTests(TransactionTestCase):
         """Connecting without a token closes the handshake."""
 
         async def scenario() -> None:
+            """Attempt a websocket connection with no token query param."""
             communicator = WebsocketCommunicator(
                 BookingStatusConsumer.as_asgi(),
                 "/ws/bookings/",

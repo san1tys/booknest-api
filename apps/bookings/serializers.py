@@ -71,6 +71,8 @@ class BookingListSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(source="room.hotel.name", read_only=True)
 
     class Meta:
+        """Metadata for booking list serialization."""
+
         model = Booking
         fields = (
             "id",
@@ -94,6 +96,7 @@ class AvailabilityQuerySerializer(serializers.Serializer):
     check_out = serializers.DateField()
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """Validate that the requested date range is chronologically valid."""
         if attrs["check_out"] <= attrs["check_in"]:
             raise serializers.ValidationError(
                 {"check_out": _("Check-out date must be after check-in date.")}

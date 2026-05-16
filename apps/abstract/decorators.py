@@ -19,6 +19,8 @@ def validate_serializer_data(
     """Validate request data before the view logic runs."""
 
     def decorator(func: Callable[..., DRFResponse]) -> Callable[..., DRFResponse]:
+        """Wrap a view method with serializer validation logic."""
+
         @wraps(func)
         def wrapper(
             self,
@@ -26,6 +28,7 @@ def validate_serializer_data(
             *args: tuple[Any, ...],
             **kwargs: dict[str, Any],
         ) -> DRFResponse:
+            """Instantiate, validate, and inject a serializer into the view."""
             local_context = dict(context or {})
             local_context["request"] = request
 
@@ -68,6 +71,8 @@ def find_queryset_object_by_query_pk(
     """Find an object from a queryset by URL `pk` and pass it to the view."""
 
     def decorator(func: Callable[..., DRFResponse]) -> Callable[..., DRFResponse]:
+        """Wrap a view method with primary-key object lookup logic."""
+
         @wraps(func)
         def wrapper(
             self,
@@ -75,6 +80,7 @@ def find_queryset_object_by_query_pk(
             *args: tuple[Any, ...],
             **kwargs: dict[str, Any],
         ) -> DRFResponse:
+            """Load the target object or return a structured API error."""
             pk = kwargs.get("pk")
             assert pk is not None, "Primary key is not provided"
 

@@ -24,23 +24,8 @@ AUTH_USER_MODEL = "users.User"
 # ------------------------
 # Apps
 # ------------------------
-UNFOLD_APPS = []
-try:
-    import unfold  # noqa: F401
-except ImportError:
-    UNFOLD_APPS = []
-else:
-    UNFOLD_APPS = [
-        # Must be before django.contrib.admin (overrides templates/static)
-        "unfold",
-        "unfold.contrib.filters",
-        "unfold.contrib.forms",
-        "unfold.contrib.inlines",
-    ]
-
 DJANGO_AND_THIRD_PARTY_APPS = [
     # Django
-    *UNFOLD_APPS,
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

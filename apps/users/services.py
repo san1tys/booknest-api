@@ -11,7 +11,7 @@ from apps.abstract.redis_storage import (
     set_temporary_data,
 )
 from apps.users.models import User
-from apps.users.tasks import send_OTP as send_email
+from apps.users.tasks import send_otp as send_email
 
 logger = logging.getLogger(__name__)
 

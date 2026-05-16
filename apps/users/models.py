@@ -40,6 +40,8 @@ class UserManager(BaseUserManager):
 class User(
     AbstractBaseUser, PermissionsMixin, AbstractBaseModel, AbstractSoftDeleteModel
 ):
+    """Application user identified by email instead of username."""
+
     NAME_LENGTH = 100
 
     email = models.EmailField(unique=True, verbose_name=_("Email"))
@@ -62,10 +64,10 @@ class User(
     is_staff = models.BooleanField(default=False, verbose_name=_("Staff status"))
 
     class Meta:
+        """Metadata for user verbose names."""
+
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-
-    # created_at = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
 
